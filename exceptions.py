@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+__all__ = ['ValidatorError', 'BadTitle']
+
 class ValidatorError(Exception):
     '''Base exception class for all file validation errors.'''
 

@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from exceptions import BadTitle
 
 __all__ = ['Validator']
 
@@ -26,11 +27,15 @@ class Validator(object):
     def __init__(self):
         pass
     
+    def validate(self, filename):
+        if not self.validateTitle(filename):
+            raise BadTitle("Bad title in file: " + filename)
+    
     def validateTitle(self, filename):
         '''Check a file to make sure it has a properly-formatted title.'''
         with open(filename, 'r', encoding='utf-8') as file:
             first_line = file.readline()
-            title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
+            title = re.match(r'^\s*=\s(.*)\s=\s*$', first_line, re.MULTILINE)
         if title:
             return True
         else:
