@@ -28,24 +28,29 @@ class TestFileValidation(unittest.TestCase):
     
     def setUp(self):
         self.v = Validator()
-        self.buffer = open('buffer.txt', 'w')
     
     def tearDown(self):
-        self.buffer.close()
-        os.remove('buffer.txt')
+        try:
+            os.remove('buffer.txt')
+        except FileNotFoundError:
+            pass
     
     def testGoodTitle(self):
-        self.buffer.write('  = Foo v. Bar - Some other stuff = ')
+        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
+            buffer.write('  = Foo v. Bar - Some other stuff = \n')
         self.assertTrue(self.v.validateTitle('buffer.txt'), 'Validator did not pass a good title.')
     
     def testPoorlyPlacedTitle(self):
-        self.buffer.write(' There\'s text before my title! = But there is a title =')
-        self.assertFalse(self.v.validateTitle('buffer.txt'), 'Validator passed a title that was not at the beginning of the file.')
+        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
+            buffer.write(' There\'s text before my title!\n = But there is a title =\n')
+        self.assertFalse(self.v.validateTitle('buffer.txt'), 'Validator passed a title that was not'
+                         ' at the beginning of the file.')
         
     def testNoTitle(self):
-        self.buffer.write(' There\s no title at all!')
-        self.assertFalse(self.v.validateTitle('buffer.txt'), 'Validator passed a file with no title.')
-
+        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
+            buffer.write(' There\s no title at all!\n')
+        self.assertFalse(self.v.validateTitle('buffer.txt'), 'Validator passed a file with no'
+                         ' title.')
 
 if __name__ == "__main__":
     unittest.main()

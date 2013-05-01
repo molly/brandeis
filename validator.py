@@ -28,10 +28,12 @@ class Validator(object):
     
     def validateTitle(self, filename):
         '''Check a file to make sure it has a properly-formatted title.'''
-        with open(filename, 'r') as file:
+        with open(filename, 'r', encoding='utf-8') as file:
             first_line = file.readline()
             title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
         if title:
             return True
         else:
             return False
+    
+    
