@@ -17,5 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = []
+import re
 
+__all__ = ['Validator']
+
+class Validator(object):
+    
+    def __init__(self):
+        pass
+    
+    def validateTitle(self, filename):
+        '''Check a file to make sure it has a properly-formatted title.'''
+        with open(filename, 'r') as file:
+            first_line = file.readline()
+            title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
+        if title:
+            return True
+        else:
+            return False

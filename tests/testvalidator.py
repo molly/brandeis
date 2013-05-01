@@ -18,42 +18,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from caseparser import Validator
-import unittest
+from validator import Validator
+import os, unittest
 
-__all__ = ['TestFileValidation', 'TestParser']
+__all__ = ['TestFileValidation']
 
 class TestFileValidation(unittest.TestCase):
     '''Test functions that validate the input files.'''
     
     def setUp(self):
         self.v = Validator()
-        pass
+        self.buffer = open('buffer.txt', 'w')
     
     def tearDown(self):
-        pass
+        self.buffer.close()
+        os.remove('buffer.txt')
     
-    def testTitle(self):
-        good_file = '  = Foo v. Bar - Some other stuff = '
-        bad_file = ' There\'s text before my title! = But there is a title ='
-        bad_file2 = ' There\s no title at all!'
-        self.failUnless(self.v.validateTitle(good_file), 'Validator did not pass a good title.')
-        self.failIf(self.v.validateTitle(bad_file), 'Validator passed a title that was not at the beginning of the file.')
-        self.failIf(self.v.validateTitle(bad_file2), 'Validator passed a file with no title.')
+    def testGoodTitle(self):
+        self.buffer.write('  = Foo v. Bar - Some other stuff = ')
+        self.assertTrue(self.v.validateTitle('buffer.txt'), 'Validator did not pass a good title.')
+    
+    def testPoorlyPlacedTitle(self):
+        self.buffer.write(' There\'s text before my title! = But there is a title =')
+        self.assertFalse(self.v.validateTitle('buffer.txt'), 'Validator passed a title that was not at the beginning of the file.')
         
-class TestParser(unittest.TestCase):
-    '''Test functions that parse the plain text to wikitext.'''
-
-    def setUp(self):
-        pass
-
-
-    def tearDown(self):
-        pass
-
-
-    def testParseTitle(self):
-        pass
+    def testNoTitle(self):
+        self.buffer.write(' There\s no title at all!')
+        self.assertFalse(self.v.validateTitle('buffer.txt'), 'Validator passed a file with no title.')
 
 
 if __name__ == "__main__":

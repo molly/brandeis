@@ -16,3 +16,9 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+class ValidatorError(Exception):
+    '''Base exception class for all file validation errors.'''
+
+class BadTitle(ValidatorError):
+    '''The file contained an improperly formatted title, or was missing one entirely.'''
