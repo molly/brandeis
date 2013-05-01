@@ -17,5 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = []
+__all__ = ['Parser']
 
+class Parser(object):
+    
+    def __init__(self, wikitext):
+        self.wikitext = wikitext
+
+    def parse(self, file):
+        print(file)
+        
+    def get_title(self):
+        pass

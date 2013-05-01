@@ -18,15 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, logging, os, sys
+import argparse, exceptions, logging, os, sys
 from validator import Validator
+from caseparser import Parser
 
 # Set up logging
 logger = logging.getLogger('brandeis')
 logger.setLevel(logging.DEBUG)
 console = logging.StreamHandler()
 console.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(levelname)s - %(message)s')
 console.setFormatter(formatter)
 logger.addHandler(console)
 
@@ -61,7 +62,19 @@ else:
 # Validate and parse each file
 validator = Validator()
 for file in files:
-    validator.validate(file)
+    wikitext = dict()
+    parser = Parser(wikitext)
+    
+    #Validate the file
+    try:
+        validator.validate(file)
+    except exceptions.BadTitle as e:
+        logger.error("Validation error: " + e.value + ". File will be skipped.")
+    else:
+        try:
+            parser.parse(file)
+        except:
+            logger.error(e.value + ". File will be skipped.")
     
 
     
