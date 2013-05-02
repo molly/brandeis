@@ -28,6 +28,8 @@ class Validator(object):
         pass
     
     def validate(self, filename):
+        '''Run various validation functions to try to weed out any improperly-formatted
+        files.'''
         if not self.validateTitle(filename):
             raise BadTitle("Bad title in file: " + filename)
     
@@ -35,7 +37,7 @@ class Validator(object):
         '''Check a file to make sure it has a properly-formatted title.'''
         with open(filename, 'r', encoding='utf-8') as file:
             first_line = file.readline()
-            title = re.match(r'^\s*=\s(.*)\s=\s*$', first_line, re.MULTILINE)
+            title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
         if title:
             return True
         else:

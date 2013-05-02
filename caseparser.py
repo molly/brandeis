@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import re
+
 __all__ = ['Parser']
 
 class Parser(object):
@@ -24,8 +26,13 @@ class Parser(object):
     def __init__(self, wikitext):
         self.wikitext = wikitext
 
-    def parse(self, file):
-        print(file)
+    def parse(self, filename):
+        '''Run the parser functions on the file.'''
+        file = open(filename, 'r', encoding='utf-8')
+        self.get_title(file)
         
-    def get_title(self):
-        pass
+    def get_title(self, file):
+        '''Pull the title from the file.'''
+        first_line = file.readline()
+        title = re.match(r'^\s*=\s(?P<title>.*)\s=\s*$', first_line, re.MULTILINE)
+        print(title.group("title"))
