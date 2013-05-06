@@ -73,6 +73,7 @@ for file in files:
     else:
         try:
             parser.parse(file)
+            print(wikitext)
         except:
             logger.error(e.value + ". File will be skipped.")
     
