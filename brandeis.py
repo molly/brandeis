@@ -60,14 +60,14 @@ else:
             sys.exit(0)
 
 # Validate and parse each file
-validator = Validator()
 for file in files:
     wikitext = dict()
+    validator = Validator(file)
     parser = Parser(wikitext)
     
     #Validate the file
     try:
-        validator.validate(file)
+        validator.validate()
     except exceptions.BadTitle as e:
         logger.error("Validation error: " + e.value + ". File will be skipped.")
     else:

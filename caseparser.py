@@ -34,7 +34,7 @@ class Parser(object):
     def get_title(self, file):
         '''Pull the title from the file.'''
         first_line = file.readline()
-        title = re.match(r'^\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*$', first_line, re.MULTILINE)
+        title = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*', first_line)
         self.wikitext["full_title"] = title.group("full")
         self.wikitext["title"] = title.group("title")
         self.wikitext["number"] = title.group("number")

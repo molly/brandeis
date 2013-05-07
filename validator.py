@@ -24,23 +24,50 @@ __all__ = ['Validator']
 
 class Validator(object):
     
-    def __init__(self):
-        pass
+    def __init__(self, filename):
+        self.filename = filename
+        self.file = open(filename, 'r', encoding='utf-8')
+        
+    def __del__(self):
+        self.file.close()
     
-    def validate(self, filename):
+    def validate(self):
         '''Run various validation functions to try to weed out any improperly-formatted
         files.'''
-        if not self.validateTitle(filename):
-            raise BadTitle("Bad title in file: " + filename)
+        if not self.validateTitle():
+            raise BadTitle("Bad title in file: " + self.filename)
+        if not self.validateTitleParts():
+            raise BadTitle("Bad title parts in file: " + self.filename)
     
-    def validateTitle(self, filename):
-        '''Check a file to make sure it has a properly-formatted title.'''
-        with open(filename, 'r', encoding='utf-8') as file:
-            first_line = file.readline()
-            title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
+    def validateTitle(self):
+        '''Check a file to make sure it has a properly-formatted title. The title should be the
+        first line of the text file, and of the format:
+         = Title = 
+        There should a leading and trailing space.'''
+        first_line = self.file.readline()
+        title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
         if title:
             return True
         else:
             return False
-    
-    
+        
+    def validateTitleParts(self):
+        '''Check that the title can be broken into valid parts. Each title has the short title, 
+        case number, and date. The title can be of any format. The case number is of the format:
+        ### U.S. ###
+        with 1-3 digits in each number. The date is of the format:
+        (####)
+        The full format of the title is:
+         = Title - Number Date = 
+        '''
+        first_line = self.file.readline()
+        title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
+        parts = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*', title.group())
+        if not parts or not parts.group('title'):
+            return False
+        number = re.match(r'\d{1,3}\sU.S.\s\d{1,3}', parts.group('number'))
+        date = re.match(r'\d{4}', parts.group('date'))
+        if not number or not date:
+            return False
+        else:
+            return True
