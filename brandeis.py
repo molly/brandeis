@@ -26,7 +26,7 @@ from api import API
 
 # Set up logging
 logger = logging.getLogger('brandeis')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 console = logging.StreamHandler()
 console.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)s - %(message)s')
@@ -68,8 +68,8 @@ for file in files:
     parser = Parser(wikidict, file)
     api = API()
     
-    #Validate the file. Files that do not pass validation are skipped without interrupting the rest
-    #of the process.
+    # Validate the file. Files that do not pass validation are skipped without interrupting the rest
+    # of the process.
     try:
         validator.validate()
     except GroupedCase as e:
@@ -79,11 +79,18 @@ for file in files:
         logger.error(e.value + " File will be skipped.")
         continue
     
-    #Get the title of the file
+    # Get the title and other metadata
     parser.get_title()
     
-    #Skip if the file exists on Wikisource already
+    # Skip if the file exists on Wikisource already
     try:
         line = api.get_case_line(wikidict['title'], wikidict['volume'], wikidict['page'])
     except Exception as e:
         logger.error(e.value + " File will be skipped.")
+    else:
+        if api.case_exists(line):
+            logger.info(wikidict['title'] + " exists on Wikisource. File will be skipped.")
+            continue
+    
+    # At this point, we have a valid text file for a case that does not exist on Wikisource
+    print(wikidict['title'])

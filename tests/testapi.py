@@ -22,9 +22,9 @@ from exceptions import *
 from urllib import parse, request
 import unittest, json, re
 
-__all__ = ['TestFileValidation']
+__all__ = ['TestAPIFunctions']
 
-class TestFileValidation(unittest.TestCase):
+class TestAPIFunctions(unittest.TestCase):
     '''Test functions that communicate with the Wikisource API.'''
     
     def setUp(self):
@@ -48,7 +48,18 @@ class TestFileValidation(unittest.TestCase):
     def testNotInList(self):
         with self.assertRaises(NoCaseInList, msg='Returned an entry for a non-existent case.'):
             self.api.get_case_line('CaseName', '39', '800')
-        
+            
+    def testExistingCase(self):
+        self.assertTrue(self.api.case_exists("* [http://openjurist.org/60/us/393 60 U.S. 393] "
+                                             "([[:Category:1790 works|1790]]) "
+                                             "[[Dred Scott v. Sandford]]"), 
+                        "Returned false for a case that exists on Wikisource.")
+    
+    def testNonexistentCase(self):
+        self.assertFalse(self.api.case_exists("* [http://openjurist.org/67/us/17 67 U.S. 17] "
+                                             "([[:Category:1851 works|1851]]) [[Silly case"
+                                             "name that will never exist on Wikisource]]"), 
+                        "Returned true for a case that does not exist on Wikisource.")
 if __name__ == '__main__':
     unittest.main()
             

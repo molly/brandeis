@@ -18,7 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from urllib import parse, request
+from urllib import error, parse, request
+from sys import exit
 from exceptions import APIError, NoCaseInList, PageNotFound
 import json, re
 
@@ -27,6 +28,16 @@ class API(object):
     def __init__(self):
         self.base_URL = 'http://en.wikisource.org/w/api.php?format=json&action='
         self.base_volume = 'United States Reports/Volume ' 
+        
+    def case_exists(self, line):
+        title_match = re.search(r'\[{2}(?!:?Category)(?P<link>.*?)\]{2}', line)
+        if title_match:
+            title = title_match.group("link")
+        URL = self.base_URL + 'parse&text={0}&prop=links'.format(parse.quote(line))
+        response = self.request(URL)
+        for link in response["parse"]["links"]:
+            if link['*'] == title:
+                return "exists" in link
         
     def get_case_line(self, title, vol, page):
         volume = parse.quote(self.base_volume + vol);
@@ -39,18 +50,22 @@ class API(object):
         regex = re.compile("^\* \[(?:.*?) {0} U\.S\. {1}\] (.*?)$".format(vol, page), re.MULTILINE)
         match = regex.search(content)
         if match:
-            return [match.group(0)]
+            return match.group(0)
         else:
             rstring = "^(.*?)" + re.escape(title) + "(.*?)$"
             regex = re.compile(rstring, re.MULTILINE)
             match = regex.search(content)
             if match:
-                return [match.group(0)]
+                return match.group(0)
             else:
                 raise NoCaseInList("Unable to find case {0} ({1} U.S. {2}) in the list of cases"
                                    " retrieved from API query: {3}.".format(title, vol, page,
                                                                             URL))
     
     def request(self, url):
-        response = json.loads(request.urlopen(url).read().decode('utf-8'))
-        return response
+        try:
+            response = json.loads(request.urlopen(url).read().decode('utf-8'))
+        except error.HTTPError:
+            exit("Exited: HTTPError when making API requests.")
+        else:
+            return response
