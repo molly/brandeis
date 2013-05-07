@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 # Brandeis - A tool to convert plaintext court cases (from the lochner
-# tool: http://gitorious.org/lochner/) to wikitext.
+# tool: http://gitorious.org/lochner/) to wikidict.
 # 
 # Copyright (C) 2013 Molly White
 # 
@@ -22,20 +22,22 @@ import re
 __all__ = ['Parser']
 
 class Parser(object):
-    
-    def __init__(self, wikitext):
-        self.wikitext = wikitext
+    '''The parser converts the raw case text from lochner to a dictionary object. This is later
+    converted to wikitext to be uploaded.'''
+    def __init__(self, wikidict):
+        self.wikidict = wikidict
 
     def parse(self, filename):
         '''Run the parser functions on the file.'''
         file = open(filename, 'r', encoding='utf-8')
         self.get_title(file)
+        file.close()
         
     def get_title(self, file):
         '''Pull the title from the file.'''
         first_line = file.readline()
         title = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*', first_line)
-        self.wikitext["full_title"] = title.group("full")
-        self.wikitext["title"] = title.group("title")
-        self.wikitext["number"] = title.group("number")
-        self.wikitext["date"] = title.group("date")
+        self.wikidict["full_title"] = title.group("full")
+        self.wikidict["title"] = title.group("title")
+        self.wikidict["number"] = title.group("number")
+        self.wikidict["date"] = title.group("date")

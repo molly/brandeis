@@ -21,6 +21,10 @@ __all__ = ['ValidatorError', 'BadTitle']
 
 class ValidatorError(Exception):
     '''Base exception class for all file validation errors.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class BadTitle(ValidatorError):
     '''The file contained an improperly formatted title, or was missing one entirely.'''

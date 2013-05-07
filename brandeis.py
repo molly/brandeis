@@ -61,19 +61,21 @@ else:
 
 # Validate and parse each file
 for file in files:
-    wikitext = dict()
+    wikidict = dict()
     validator = Validator(file)
-    parser = Parser(wikitext)
+    parser = Parser(wikidict)
     
-    #Validate the file
+    #Validate the file. Files that do not pass validation are skipped without interrupting the rest
+    #of the process.
     try:
         validator.validate()
-    except exceptions.BadTitle as e:
-        logger.error("Validation error: " + e.value + ". File will be skipped.")
+    except Exception as e:
+        logger.error("Validation error: " + e.value + " File will be skipped.")
     else:
         try:
+            #Parse the file into a dictionary.
             parser.parse(file)
-            print(wikitext)
+            print(wikidict)
         except:
             logger.error(e.value + ". File will be skipped.")
     
