@@ -30,50 +30,50 @@ class TestFileValidation(unittest.TestCase):
         pass
     
     def tearDown(self):
-        try:
-            os.remove('buffer.txt')
-        except FileNotFoundError:
-            pass
+        self.buffer.close()
     
     def testGoodTitle(self):
-        
-        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
-            buffer.write('  = Foo v. Bar - Some other stuff = \n')
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write('  = Foo v. Bar - Some other stuff = \n')
         v = Validator('buffer.txt')
         self.assertTrue(v.validateTitle(), 'Validator did not pass a good title.')
     
     def testPoorlyPlacedTitle(self):
-        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
-            buffer.write(' There\'s text before my title!\n = But there is a title =\n')
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write(' There\'s text before my title!\n = But there is a title =\n')
         v = Validator('buffer.txt')
         self.assertFalse(v.validateTitle(), 'Validator passed a title that was not'
                          ' at the beginning of the file.')
         
     def testNoTitle(self):
-        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
-            buffer.write(' There\s no title at all!\n')
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write(' There\s no title at all!\n')
         v = Validator('buffer.txt')
         self.assertFalse(v.validateTitle(), 'Validator passed a file with no title.')
     
     def testGoodTitleParts(self):
-        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
-            buffer.write('= Foo v. Bar - 100 U.S. 200 (2013) =')
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write('= Foo v. Bar - 100 U.S. 200 (2013) =')
         v = Validator('buffer.txt')
         self.assertTrue(v.validateTitleParts(), 'Validator did not pass a title with good parts.')
     
     def testBadTitleDate(self):
-        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
-            buffer.write('= Foo v. Bar - 100 U.S. 200 (203) =')
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write('= Foo v. Bar - 100 U.S. 200 (203) =')
         v = Validator('buffer.txt')
         self.assertFalse(v.validateTitleParts(), 'Validator passed a title containing an improperly'
                          'formatted date.')
         
     def testBadTitleNumber(self):
-        with open('buffer.txt', 'w', encoding='utf-8') as buffer:
-            buffer.write('= Foo v. Bar - U.S. 200 (2013) =')
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write('= Foo v. Bar - U.S. 200 (2013) =')
         v = Validator('buffer.txt')
         self.assertFalse(v.validateTitleParts(), 'Validator passed a title containing an improperly'
                          'formatted case number.')
 
 if __name__ == "__main__":
     unittest.main()
+    try:
+        os.remove('buffer.txt')
+    except:
+        pass

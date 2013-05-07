@@ -62,12 +62,15 @@ class Validator(object):
         '''
         first_line = self.file.readline()
         title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
-        parts = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*', title.group())
-        if not parts or not parts.group('title'):
+        if not title:
+            return False
+        parts = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*',
+                         title.group())
+        if not parts:
             return False
         number = re.match(r'\d{1,3}\sU.S.\s\d{1,3}', parts.group('number'))
         date = re.match(r'\d{4}', parts.group('date'))
-        if not number or not date:
+        if not parts.group('title') or not number or not date:
             return False
         else:
             return True
