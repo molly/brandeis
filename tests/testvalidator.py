@@ -66,6 +66,14 @@ class TestFileValidation(unittest.TestCase):
         except:
             self.fail('Validator did not pass a title with good parts.')
     
+    def testIdentifyCaseGroup(self):
+        with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
+            self.buffer.write('= Group of Cases - 100 U.S. 200 (2013) =')
+        v = Validator('buffer.txt')
+        with self.assertRaises(ValidatorError, msg='Validator failed to identify a group of cases'
+                               ' as such.'):
+            v.validateTitleParts()
+    
     def testBadTitleDate(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
             self.buffer.write('= Foo v. Bar - 100 U.S. 200 (203) =')

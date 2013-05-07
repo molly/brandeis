@@ -67,8 +67,8 @@ class Validator(object):
         parts = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*',
                          title.group())
         if not parts:
-            raise BadTitle("Title in {} does not consist of the regular parts."
-                           .format(self.filename))
+            raise BadTitle("Title in {0} does not consist of the regular parts: {1}."
+                           .format(self.filename, first_line))
         short_title = re.match(r'(?P<petitioner>.*?)\sv\.\s(?P<respondent>.*?)',
                                parts.group('title'))
         number = re.match(r'(?P<volume>\d{1,3})\s(?P<abbr>U.S.)\s(?P<page>\d{1,3})',
@@ -77,6 +77,6 @@ class Validator(object):
         if not short_title:
             raise ValidatorError("{} is a group of cases.".format(self.filename))
         if not number:
-            raise BadTitle("{} contains a bad case number.".format(self.filename))
+            raise BadTitle("{0} contains a bad case number: {1}.".format(self.filename, first_line))
         if not date:
-            raise BadTitle("{} contains a bad date.".format(self.filename))
+            raise BadTitle("{0} contains a bad date: {1}.".format(self.filename, first_line))
