@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from exceptions import BadTitle, ValidatorError
+from exceptions import BadTitle, GroupedCase
 
 __all__ = ['Validator']
 
@@ -75,7 +75,7 @@ class Validator(object):
                           parts.group('number'))
         date = re.match(r'\d{4}', parts.group('date'))
         if not short_title:
-            raise ValidatorError("{} is a group of cases.".format(self.filename))
+            raise GroupedCase("{} is a group of cases.".format(self.filename))
         if not number:
             raise BadTitle("{0} contains a bad case number: {1}.".format(self.filename, first_line))
         if not date:

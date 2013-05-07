@@ -17,7 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ['ValidatorError', 'BadTitle']
+'''
+These are the exceptions used by brandeis:
+
+    ValidatorError
+     +-- BadTitle
+     +-- GroupedCase
+    APIError
+     +-- NoCaseInList
+'''
 
 class ValidatorError(Exception):
     '''Base exception class for all file validation errors.'''
@@ -25,9 +33,38 @@ class ValidatorError(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+    
+class APIError(Exception):
+    '''Base exception class for any Wikisource API errors.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class BadTitle(ValidatorError):
     '''The file contained an improperly formatted title, or was missing one entirely.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class GroupedCase(ValidatorError):
+    '''The file consists of a group of cases.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class NoCaseInList(APIError):
+    '''This case was not listed in the U.S. Reports
+    (https://en.wikisource.org/wiki/United_States_Reports).'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class PageNotFound(APIError):
+    '''The API call did not find an existing page.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):

@@ -70,7 +70,7 @@ class TestFileValidation(unittest.TestCase):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
             self.buffer.write('= Group of Cases - 100 U.S. 200 (2013) =')
         v = Validator('buffer.txt')
-        with self.assertRaises(ValidatorError, msg='Validator failed to identify a group of cases'
+        with self.assertRaises(GroupedCase, msg='Validator failed to identify a group of cases'
                                ' as such.'):
             v.validateTitleParts()
     

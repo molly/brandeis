@@ -18,9 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, exceptions, logging, os, sys
+import argparse, logging, os, sys
+from exceptions import *
 from validator import Validator
 from caseparser import Parser
+from api import API
 
 # Set up logging
 logger = logging.getLogger('brandeis')
@@ -63,21 +65,25 @@ else:
 for file in files:
     wikidict = dict()
     validator = Validator(file)
-    parser = Parser(wikidict)
+    parser = Parser(wikidict, file)
+    api = API()
     
     #Validate the file. Files that do not pass validation are skipped without interrupting the rest
     #of the process.
     try:
         validator.validate()
+    except GroupedCase as e:
+        logger.info(e.value + " File will be skipped.")
+        continue
+    except ValidatorError as e:
+        logger.error(e.value + " File will be skipped.")
+        continue
+    
+    #Get the title of the file
+    parser.get_title()
+    
+    #Skip if the file exists on Wikisource already
+    try:
+        line = api.get_case_line(wikidict['title'], wikidict['volume'], wikidict['page'])
     except Exception as e:
-        logger.error("Validation error: " + e.value + " File will be skipped.")
-    else:
-        try:
-            #Parse the file into a dictionary.
-            parser.parse(file)
-            print(wikidict)
-        except:
-            logger.error(e.value + ". File will be skipped.")
-    
-
-    
+        logger.error(e.value + " File will be skipped.")
