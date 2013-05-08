@@ -25,17 +25,18 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'WORD',
+              'TITLE',
               )
     
-    def t_WORD(self, token):
-        r'[a-zA-Z]+'
+    def t_TITLE(self, token):
+        r'\s?=\s?(?P<title>.*?)\s?=\s?\n'
+        token.value = token.lexer.lexmatch.group('title')
         return token
     
     def t_ANY_error(self, token):
         token.lexer.skip(1)
-        self.logger.info("Illegal character {} at line {}, position {}."
-                         .format(token.value[0], token.lineno, token.lexpos))
+#        self.logger.info("Illegal character {} at line {}, position {}."
+#                         .format(token.value[0], token.lineno, token.lexpos))
         
     def __init__(self):
         '''Initiate logging, open a file to store tokens, build the lexer.'''

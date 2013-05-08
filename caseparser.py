@@ -49,6 +49,13 @@ class Parser(object):
     def write(self, text):
         if type(text) is str:
             self.output.write(text)
+            
+#===================================================================================================
+# PARSING FUNCTIONS
+#===================================================================================================
+    def title(self):
+        print(self.value)
+        self.value = ''
         
 def get_metadata(metadict, filename):
     '''Pull the title from the file.'''
