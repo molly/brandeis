@@ -29,7 +29,7 @@ class Parser(object):
         self.wikidict = wikidict
         self.file = open(filename, 'r', encoding='utf-8')
 
-    def parse(self, filename):
+    def parse(self):
         '''Run the parser functions on the file.'''
         pass
         

@@ -25,6 +25,7 @@ These are the exceptions used by brandeis:
      +-- GroupedCase
     APIError
      +-- NoCaseInList
+     +-- PageNotFound
 '''
 
 class ValidatorError(Exception):
@@ -69,3 +70,11 @@ class PageNotFound(APIError):
         self.value = value
     def __str__(self):
         return repr(self.value)
+    
+class MultipleCases(APIError):
+    '''The case was found multiple times in the list.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    

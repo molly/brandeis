@@ -85,8 +85,12 @@ for file in files:
     # Skip if the file exists on Wikisource already
     try:
         line = api.get_case_line(wikidict['title'], wikidict['volume'], wikidict['page'])
-    except Exception as e:
+    except NoCaseInList as e:
+        logger.info(e.value + " File will be skipped.")
+        continue
+    except MultipleCases as e:
         logger.error(e.value + " File will be skipped.")
+        continue
     else:
         if api.case_exists(line):
             logger.info(wikidict['title'] + " exists on Wikisource. File will be skipped.")
@@ -94,3 +98,7 @@ for file in files:
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
     print(wikidict['title'])
+    try:
+        parser.parse()
+    except Exception as e:
+        logger.error(e.value)
