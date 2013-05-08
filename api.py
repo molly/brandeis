@@ -78,8 +78,7 @@ class API(object):
                     return result
                 else:
                     raise MultipleCases("Unable to resolve multiple matches for {0} ({1} U.S."
-                                        " {2}) in API query: {2}".format(title, vol, page,
-                                                                            URL))
+                                        " {2}) in API query: {3}".format(title, vol, page, URL))
         # Search this page for the exact title (case-insensitive)
         else:
             regex = re.compile(re.escape(title), re.MULTILINE|re.IGNORECASE)
@@ -90,13 +89,11 @@ class API(object):
                 else:
                     # VERY unlikely to happen, but no harm in adding it
                     raise MultipleCases("Unable to resolve multiple NAME matches for {0} ({1} U.S."
-                                            " {2}) in API query: {2}".format(title, vol, page,
-                                                                             URL))
+                                            " {2}) in API query: {2}".format(title, vol, page, URL))
             # Neither method worked; time to give up.
             else:
                 raise NoCaseInList("Unable to find case {0} ({1} U.S. {2}) in the list of cases"
-                                   " retrieved from API query: {3}.".format(title, vol, page,
-                                                                            URL))
+                                   " retrieved from API query: {3}.".format(title, vol, page, URL))
                 
     def filter_multiple(self, title, match_list):
         '''Fuzzy-matches the case name in a list of possible matches. Occasionally the volume page
