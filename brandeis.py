@@ -26,7 +26,7 @@ from api import API
 
 # Set up logging
 logger = logging.getLogger('brandeis')
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.DEBUG)
 console = logging.StreamHandler()
 formatter = logging.Formatter('%(levelname)s - %(message)s')
 console.setFormatter(formatter)

@@ -21,7 +21,7 @@
 from urllib import error, parse, request
 from sys import exit
 from exceptions import NoCaseInList, PageNotFound, MultipleCases
-import json, re
+import json, re, os
 
 class API(object):
     '''Makes any calls to the Wikisource API to retrieve necessary information.'''    
@@ -29,6 +29,8 @@ class API(object):
     def __init__(self):
         self.base_URL = 'http://en.wikisource.org/w/api.php?format=json&action='
         self.base_volume = 'United States Reports/Volume ' 
+        self.cache = Cache()
+        self.cache.get_cached_copy("5")
         
     def case_exists(self, line):
         '''Use the Wikisource API to parse the case line and determine if the case already exists
@@ -55,15 +57,19 @@ class API(object):
                 - Raise MultipleCases if multiple matches are found
            If neither of these returns a result, raise NoCaseInList
         '''
-        #TODO: Cache volumes so I don't have to request the same page multiple times\
+        
         # Get the appropriate United States Reports/Volume page
         volume = parse.quote(self.base_volume + vol);
         URL = self.base_URL + 'query&titles={0}&prop=revisions&rvprop=content'.format(volume)
-        response = self.request(URL)
-        rev_id = list(response["query"]["pages"].keys())[0]
-        if rev_id == "-1":
-            raise PageNotFound("There is no Wikisource page at {}.".format(volume))
-        content = response["query"]["pages"][rev_id]["revisions"][0]["*"]
+        content = self.cache.get_cached_copy(vol)
+        if not content:
+            print("Getting fresh copy of volume", vol)
+            response = self.request(URL)
+            rev_id = list(response["query"]["pages"].keys())[0]
+            if rev_id == "-1":
+                raise PageNotFound("There is no Wikisource page at {}.".format(volume))
+            content = response["query"]["pages"][rev_id]["revisions"][0]["*"]
+            self.cache.add_to_cache(vol, content)
         
         # Search this page for "[volume] U.S. [page]"
         rstring = "^.*?\D{0}\sU\.S\.\s{1}\D.*?$".format(vol, page)
@@ -81,7 +87,7 @@ class API(object):
                                         " {2}) in API query: {3}".format(title, vol, page, URL))
         # Search this page for the exact title (case-insensitive)
         else:
-            regex = re.compile(re.escape(title), re.MULTILINE|re.IGNORECASE)
+            regex = re.compile(re.escape(title), re.MULTILINE | re.IGNORECASE)
             match = regex.findall(content)
             if match:
                 if len(match) == 1:
@@ -134,3 +140,24 @@ class API(object):
             exit("Exited: HTTPError when making API requests.")
         else:
             return response
+        
+class Cache(object):
+    
+    def __init__(self):
+        try:
+            os.mkdir('cache')
+        except FileExistsError:
+            pass
+
+    def get_cached_copy(self, volume):
+        try:
+            with open('cache/' + volume, 'r', encoding='utf-8') as cache_file:
+                content = cache_file.read()
+                return content
+        except FileNotFoundError:
+            return None            
+    
+    def add_to_cache(self, volume, content):
+        with open('cache/' + volume, 'w', encoding='utf-8') as cache_file:
+            cache_file.write(content)
+        return True
