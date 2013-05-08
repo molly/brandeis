@@ -30,7 +30,6 @@ class API(object):
         self.base_URL = 'http://en.wikisource.org/w/api.php?format=json&action='
         self.base_volume = 'United States Reports/Volume ' 
         self.cache = Cache()
-        self.cache.get_cached_copy("5")
         
     def case_exists(self, line):
         '''Use the Wikisource API to parse the case line and determine if the case already exists
@@ -61,15 +60,14 @@ class API(object):
         # Get the appropriate United States Reports/Volume page
         volume = parse.quote(self.base_volume + vol);
         URL = self.base_URL + 'query&titles={0}&prop=revisions&rvprop=content'.format(volume)
-        content = self.cache.get_cached_copy(vol)
+        content = self.cache.get_cached_volume(vol)
         if not content:
-            print("Getting fresh copy of volume", vol)
             response = self.request(URL)
             rev_id = list(response["query"]["pages"].keys())[0]
             if rev_id == "-1":
                 raise PageNotFound("There is no Wikisource page at {}.".format(volume))
             content = response["query"]["pages"][rev_id]["revisions"][0]["*"]
-            self.cache.add_to_cache(vol, content)
+            self.cache.add_to_volume_cache(vol, content)
         
         # Search this page for "[volume] U.S. [page]"
         rstring = "^.*?\D{0}\sU\.S\.\s{1}\D.*?$".format(vol, page)
@@ -101,7 +99,7 @@ class API(object):
                 raise NoCaseInList("Unable to find case {0} ({1} U.S. {2}) in the list of cases"
                                    " retrieved from API query: {3}.".format(title, vol, page, URL))
                 
-    def filter_multiple(self, title, match_list):
+    def _filter_multiple(self, title, match_list):
         '''Fuzzy-matches the case name in a list of possible matches. Occasionally the volume page
         will have multiple cases with the same volume and page numbers; this will try to match by
         title. Titles may not be exact, so this requires one word in the petitioner and one in the
@@ -149,7 +147,7 @@ class Cache(object):
         except FileExistsError:
             pass
 
-    def get_cached_copy(self, volume):
+    def get_cached_volume(self, volume):
         try:
             with open('cache/' + volume, 'r', encoding='utf-8') as cache_file:
                 content = cache_file.read()
@@ -157,7 +155,7 @@ class Cache(object):
         except FileNotFoundError:
             return None            
     
-    def add_to_cache(self, volume, content):
+    def add_to_volume_cache(self, volume, content):
         with open('cache/' + volume, 'w', encoding='utf-8') as cache_file:
             cache_file.write(content)
         return True
