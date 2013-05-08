@@ -33,6 +33,8 @@ class TestAPIFunctions(unittest.TestCase):
     def tearDown(self):
         pass
     
+# get_case_line()
+
     def testBadRequest(self):
         with self.assertRaises(PageNotFound, msg='Validator passed a page that had no content.'):
             self.api.get_case_line('title', '800', '25')
@@ -48,6 +50,8 @@ class TestAPIFunctions(unittest.TestCase):
     def testNotInList(self):
         with self.assertRaises(NoCaseInList, msg='Returned an entry for a non-existent case.'):
             self.api.get_case_line('CaseName', '39', '800')
+    
+# case_exists()
             
     def testExistingCase(self):
         self.assertTrue(self.api.case_exists("* [http://openjurist.org/60/us/393 60 U.S. 393] "
@@ -60,6 +64,25 @@ class TestAPIFunctions(unittest.TestCase):
                                              "([[:Category:1851 works|1851]]) [[Silly case"
                                              "name that will never exist on Wikisource]]"), 
                         "Returned true for a case that does not exist on Wikisource.")
+
+# filter_multiple
+
+    def testAmbiguousCaseNumber(self):
+        self.assertEqual(self.api.filter_multiple("BETHEL v. LLOYD",
+                                               ['* 1 U.S. 2 (Pa. 1759) [[Hyam v. Edwards]]',
+                                                '* [http://openjurist.org/1/us/2 1 U.S. 2] [[Bethel v. Lloyd]]',
+                                                '* 1 U.S. 2 (Pa. 1759) [[Lewis v. Stammers]]']),
+                         '* [http://openjurist.org/1/us/2 1 U.S. 2] [[Bethel v. Lloyd]]',
+                         "Returned an incorrect match for a case matching several numbers.")
+        
+    def testAmbiguousCaseNumberAndName(self):
+            self.assertIsNone(self.api.filter_multiple("DAVEY v. TURNER",
+                                                      ['* [http://openjurist.org/1/us/11 1 U.S. 11] [[Hugh Davey et Ux. v. Peter Turner]]',
+                                                       "* 1 U.S. 11 (Pa. 1764) [[King's Road]]",
+                                                       '* 1 U.S. 11 (Pa. 1764) [[Davey v. Turner]]']),
+                              "Did not return None for an ambiguous case number AND name.")
+                                                      
+
 if __name__ == '__main__':
     unittest.main()
             
