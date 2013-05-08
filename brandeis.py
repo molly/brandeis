@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse, logging, os, sys
-from exceptions import *
+from bexceptions import *
 from validator import Validator
 from caseparser import Parser, get_metadata
 from api import API
