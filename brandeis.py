@@ -18,11 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse, logging, os, sys
+import argparse, logging, os, re, sys
 from bexceptions import *
 from validator import Validator
 from caseparser import Parser, get_metadata
 from api import API
+from tokenizer import Tokenizer
 
 # Set up logging
 logger = logging.getLogger('brandeis')
@@ -96,8 +97,16 @@ for file in files:
             continue
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
-    print(metadict['title'])
+    logger.info("Parsing {0}.".format(metadict['title']))
+    tokenizer = Tokenizer()
     try:
-        parser.parse()
-    except Exception as e:
-        logger.error(e.value)
+        os.mkdir('wikitext')
+    except FileExistsError:
+        pass
+    out_filename = 'wikitext/' + re.sub(r'[^a-zA-Z0-9_]', '', metadict['title'])
+    with open(file, 'r', encoding='utf-8') as input_file:
+        raw_text = input_file.read()
+        token_stream = tokenizer.analyze(raw_text)
+    with open(out_filename, 'w', encoding='utf-8') as output_file:
+        parser.parse(token_stream, output_file)
+        

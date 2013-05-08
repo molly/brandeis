@@ -17,11 +17,41 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, os
-import ply.lex
+import logging, os, re
+import ply.lex as lex
 
 class Tokenizer(object):
 #===================================================================================================
 # TOKEN DECLARATIONS
 #===================================================================================================
-    tokens = ()
+    tokens = (
+              'WORD',
+              )
+    
+    def t_WORD(self, token):
+        r'[a-zA-Z]+'
+        return token
+    
+    def t_ANY_error(self, token):
+        token.lexer.skip(1)
+        self.logger.info("Illegal character {} at line {}, position {}."
+                         .format(token.value[0], token.lineno, token.lexpos))
+        
+    def __init__(self):
+        '''Initiate logging, open a file to store tokens, build the lexer.'''
+        self.logger = logging.getLogger('brandeis')
+        self.lexer = lex.lex(module=self)
+    
+    def analyze(self, data):
+        '''Read through the text file and tokenize.'''
+        self.lexer.input(data)
+        self.token_list = list()
+        with open('tokenout.txt', 'w+', encoding='utf-8') as tokenfile:
+            while True:
+                token = self.lexer.token()
+                if not token:
+                    break # No more input
+                l_token = [token.type, token.value]
+                self.token_list.append(l_token)
+                tokenfile.write(str(token) + '\n')
+        return self.token_list

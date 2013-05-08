@@ -17,17 +17,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import logging, re
 
 class Parser(object):
     '''The parser converts the raw case text from lochner to a dictionary object. This is later
     converted to wikitext to be uploaded.'''
+    
     def __init__(self):
-        pass
+        self.logger = logging.getLogger('brandeis')
+        self.output = None
 
-    def parse(self):
+    def parse(self, tokens, output_file):
         '''Run the parser functions on the file.'''
-        pass
+        self.output = output_file
+        self.tokens = tokens
+        self.dispatch()
+        
+    def dispatch(self):
+        for token in self.tokens:
+            self.value = token[1]
+            if self.value:
+                command = 'self.{0}()'.format(token[0].lower())
+                try:
+                    exec(command)
+                except:
+                    self.logger.error("Unable to run command " + command);
+                    break;
+                else:
+                    self.write(self.value)
+    
+    def write(self, text):
+        if type(text) is str:
+            self.output.write(text)
         
 def get_metadata(metadict, filename):
     '''Pull the title from the file.'''
