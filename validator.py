@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from exceptions import BadTitle, GroupedCase
+from bexceptions import BadTitle, GroupedCase
 
 class Validator(object):
     

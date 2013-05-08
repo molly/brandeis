@@ -20,7 +20,7 @@
 
 from urllib import error, parse, request
 from sys import exit
-from exceptions import NoCaseInList, PageNotFound, MultipleCases
+from bexceptions import NoCaseInList, PageNotFound, MultipleCases
 import json, re, os
 
 class API(object):

@@ -19,7 +19,7 @@
 
 
 from validator import Validator
-from exceptions import *
+from bexceptions import *
 import os, unittest
 
 class TestFileValidation(unittest.TestCase):

@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from api import API
-from exceptions import *
+from bexceptions import *
 import unittest
 
 class TestAPIFunctions(unittest.TestCase):
