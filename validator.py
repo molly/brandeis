@@ -20,8 +20,6 @@
 import re
 from exceptions import BadTitle, GroupedCase
 
-__all__ = ['Validator']
-
 class Validator(object):
     
     def __init__(self, filename):

@@ -19,10 +19,7 @@
 
 from api import API
 from exceptions import *
-from urllib import parse, request
-import unittest, json, re
-
-__all__ = ['TestAPIFunctions']
+import unittest
 
 class TestAPIFunctions(unittest.TestCase):
     '''Test functions that communicate with the Wikisource API.'''

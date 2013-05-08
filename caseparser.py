@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 # Brandeis - A tool to convert plaintext court cases (from the lochner
-# tool: http://gitorious.org/lochner/) to wikidict.
+# tool: http://gitorious.org/lochner/) to wikitext.
 # 
 # Copyright (C) 2013 Molly White
 # 
@@ -19,31 +19,28 @@
 
 import re
 
-__all__ = ['Parser']
-
 class Parser(object):
     '''The parser converts the raw case text from lochner to a dictionary object. This is later
     converted to wikitext to be uploaded.'''
-    def __init__(self, wikidict, filename):
-        self.filename = filename
-        self.wikidict = wikidict
-        self.file = open(filename, 'r', encoding='utf-8')
+    def __init__(self):
+        pass
 
     def parse(self):
         '''Run the parser functions on the file.'''
         pass
         
-    def get_title(self):
-        '''Pull the title from the file.'''
-        first_line = self.file.readline()
-        title = re.match(r'\s*=\s(?P<full>(?P<title>(?P<petitioner>.*?)\sv\.\s(?P<respondent>.*?))\s\-\s(?P<number>(?P<volume>\d{1,3})\s(?P<abbr>U.S.)\s(?P<page>\d{1,3}))\s\((?P<date>\d{4})\))\s=\s*', first_line)
-        self.wikidict["full_title"] = title.group("full")
-        self.wikidict["title"] = title.group("title")
-        self.wikidict["petitioner"] = title.group("petitioner")
-        self.wikidict["respondent"] = title.group("respondent")
-        self.wikidict["number"] = title.group("number")
-        self.wikidict["volume"] = title.group("volume")
-        self.wikidict["title"] = title.group("title")
-        self.wikidict["abbr"] = title.group("abbr")
-        self.wikidict["page"] = title.group("page")
-        self.wikidict["date"] = title.group("date")
+def get_metadata(metadict, filename):
+    '''Pull the title from the file.'''
+    with open(filename, 'r', encoding='utf-8') as file:
+        first_line = file.readline()
+    title = re.match(r'\s*=\s(?P<full>(?P<title>(?P<petitioner>.*?)\sv\.\s(?P<respondent>.*?))\s\-\s(?P<number>(?P<volume>\d{1,3})\s(?P<abbr>U.S.)\s(?P<page>\d{1,3}))\s\((?P<date>\d{4})\))\s=\s*', first_line)
+    metadict["full_title"] = title.group("full")
+    metadict["title"] = title.group("title")
+    metadict["petitioner"] = title.group("petitioner")
+    metadict["respondent"] = title.group("respondent")
+    metadict["number"] = title.group("number")
+    metadict["volume"] = title.group("volume")
+    metadict["title"] = title.group("title")
+    metadict["abbr"] = title.group("abbr")
+    metadict["page"] = title.group("page")
+    metadict["date"] = title.group("date")

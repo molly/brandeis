@@ -22,8 +22,6 @@ from validator import Validator
 from exceptions import *
 import os, unittest
 
-__all__ = ['TestFileValidation']
-
 class TestFileValidation(unittest.TestCase):
     '''Test functions that validate the input files.'''
     

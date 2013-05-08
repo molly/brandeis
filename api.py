@@ -99,7 +99,7 @@ class API(object):
                 raise NoCaseInList("Unable to find case {0} ({1} U.S. {2}) in the list of cases"
                                    " retrieved from API query: {3}.".format(title, vol, page, URL))
                 
-    def _filter_multiple(self, title, match_list):
+    def filter_multiple(self, title, match_list):
         '''Fuzzy-matches the case name in a list of possible matches. Occasionally the volume page
         will have multiple cases with the same volume and page numbers; this will try to match by
         title. Titles may not be exact, so this requires one word in the petitioner and one in the

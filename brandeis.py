@@ -21,7 +21,7 @@
 import argparse, logging, os, sys
 from exceptions import *
 from validator import Validator
-from caseparser import Parser
+from caseparser import Parser, get_metadata
 from api import API
 
 # Set up logging
@@ -62,9 +62,9 @@ else:
 
 # Validate and parse each file
 for file in files:
-    wikidict = dict()
+    metadict = dict()
     validator = Validator(file)
-    parser = Parser(wikidict, file)
+    parser = Parser()
     api = API()
     
     # Validate the file. Files that do not pass validation are skipped without interrupting the rest
@@ -79,11 +79,11 @@ for file in files:
         continue
     
     # Get the title and other metadata
-    parser.get_title()
+    get_metadata(metadict, file)
     
     # Skip if the file exists on Wikisource already
     try:
-        line = api.get_case_line(wikidict['title'], wikidict['volume'], wikidict['page'])
+        line = api.get_case_line(metadict['title'], metadict['volume'], metadict['page'])
     except NoCaseInList as e:
         logger.info(e.value + " File will be skipped.")
         continue
@@ -92,11 +92,11 @@ for file in files:
         continue
     else:
         if api.case_exists(line):
-            logger.info(wikidict['title'] + " exists on Wikisource. File will be skipped.")
+            logger.info(metadict['title'] + " exists on Wikisource. File will be skipped.")
             continue
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
-    print(wikidict['title'])
+    print(metadict['title'])
     try:
         parser.parse()
     except Exception as e:
