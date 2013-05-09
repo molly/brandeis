@@ -25,9 +25,10 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'FULL_TITLE',
-              'SHORT_TITLE',
-              'TERM',
+              'FULL_TITLE',         # The long-form case title
+              'SHORT_TITLE',        # Case name
+              'TERM',               # "January Term, 2000"
+              'SEPARATOR',          # "Syllabus", "Justice Foo, concurring"
               )
     
     def __init__(self, mdict):
@@ -36,21 +37,21 @@ class Tokenizer(object):
         self.metadict = mdict
         
         # Reusable data
-        self.months = r'(?:january|february|march|april|may|june|july|august|september|october|november|december)'
+        self.months = r'(?:[Jj](?:anuary|ANUARY)|[Ff](?:ebruary|EBRUARY)|[Mm](?:ARCH|arch)|[Aa](?:pril|PRIL)|[Mm](?:ay|AY)|[Jj](?:une|UNE)|[Jj](?:uly|ULY)|[Aa](?:ugust|UGUST)|[Ss](?:eptember|EPTEMBER)|[Oo](?:ctober|CTOBER)|[Nn](?:ovember|OVEMBER)|[Dd](?:ecember|ECEMBER))'
     
         
         # Define any regexes that rely on external data
-        self.t_SHORT_TITLE.__func__.__doc__ = ('\n\n' +
-                                               re.escape(self.metadict['title']) +
+        title_no_case = self.ignore_case(re.escape(self.metadict['title']))
+        self.t_SHORT_TITLE.__func__.__doc__ = ('\n\n' + title_no_case +
                                                '(?=\n\n)')
-        self.t_TERM.__func__.__doc__ = ('\n\n' + self.months + '\sterm,\s(' +
+        self.t_TERM.__func__.__doc__ = ('\n\n' + self.months + '\s[Tt][Ee][Rr][Mm],\s(' +
                                         self.metadict['date'] + '|' +
                                         str(int(self.metadict['date'])-1) + '|'
                                         + str(int(self.metadict['date'])+1) +
                                         ')(?=\n\n)')
         
         # Create lexer
-        self.lexer = lex.lex(module=self, reflags=re.IGNORECASE)
+        self.lexer = lex.lex(module=self)
 
 #===============================================================================
 # TOKEN DEFINITIONS
@@ -64,6 +65,10 @@ class Tokenizer(object):
         return token
     
     def t_TERM(self, token):
+        return token
+    
+    def t_SEPARATOR(self, token):
+        r'\n\n(syllabus|Justice\s(\S+),\sconcurring)(?=\n\n)'
         return token
     
 #===============================================================================
@@ -88,3 +93,15 @@ class Tokenizer(object):
                 self.token_list.append(l_token)
                 tokenfile.write(str(token) + '\n')
         return self.token_list
+    
+    def ignore_case(self, exp):
+        final = str()
+        for i in range(len(exp)):
+            if exp[i].isalpha():
+                if exp[i].islower():
+                    final += '[' + exp[i] + exp[i].upper() + ']'
+                else:
+                    final += '[' + exp[i] + exp[i].lower() + ']'
+            else:
+                final += exp[i]
+        return final

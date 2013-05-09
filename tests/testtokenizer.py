@@ -42,7 +42,8 @@ class TestTokenizer(unittest.TestCase):
     
     def testFullTitle(self):
         content = "= Person One v. Person Two - 1 U.S. 111 (2000) = \n"
-        result = self.tokenizer.analyze(content)[0]
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match full title.')
         self.assertEqual(result[0], 'FULL_TITLE',
                          'Title tokenizer returned incorrect token type.')
         self.assertEqual(result[1], 'Person One v. Person Two - 1 U.S. 111 (2000)',
@@ -50,7 +51,8 @@ class TestTokenizer(unittest.TestCase):
     
     def testShortTitle(self):
         content = "\n\nPerson One v. Person Two\n\n"
-        result = self.tokenizer.analyze(content)[0]
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match short title.')   
         self.assertEqual(result[0], 'SHORT_TITLE',
                          'Short title tokenizer returned incorrect token type.')
         self.assertEqual(result[1], 'Person One v. Person Two',
@@ -58,7 +60,8 @@ class TestTokenizer(unittest.TestCase):
         
     def testTerm(self):
         content = "\n\nJanuary Term, 1999\n\n"
-        result = self.tokenizer.analyze(content)[0]
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match term.')            
         self.assertEqual(result[0], 'TERM',
                          'Term tokenizer returned incorrect token type.')
         self.assertEqual(result[1], 'January Term, 1999',
