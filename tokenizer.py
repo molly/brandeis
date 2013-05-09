@@ -50,14 +50,10 @@ class Tokenizer(object):
     def t_SHORT_TITLE(self, token):
         return token
     
-    @TOKEN(re.escape('531 U.S. 4'))
     def t_CASE_NUMBER(self, token):
-        re.escape(self.metadict['number'])
         return token
         
-    @TOKEN(re.escape('2000'))
     def t_CASE_DATE(self, token):
-        re.escape(self.metadict['date'])
         return token
     
     def t_ANY_error(self, token):
