@@ -17,9 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging, os, re
+import logging, re
 import ply.lex as lex
-from ply.lex import TOKEN
 
 class Tokenizer(object):
 #===================================================================================================
@@ -28,38 +27,52 @@ class Tokenizer(object):
     tokens = (
               'FULL_TITLE',
               'SHORT_TITLE',
-              'CASE_NUMBER',
-              'CASE_DATE',
+              'TERM',
               )
-    
     
     def __init__(self, mdict):
         '''Initiate logging, open a file to store tokens, build the lexer.'''
         self.logger = logging.getLogger('brandeis')
         self.metadict = mdict
-        self.t_SHORT_TITLE.__func__.__doc__ = re.escape(self.metadict['title'])
-        self.t_CASE_NUMBER.__func__.__doc__ = re.escape(self.metadict['number'])
-        self.t_CASE_DATE.__func__.__doc__ = re.escape(self.metadict['date'])
-        self.lexer = lex.lex(module=self)
         
+        # Reusable data
+        self.months = r'(?:january|february|march|april|may|june|july|august|september|october|november|december)'
+    
+        
+        # Define any regexes that rely on external data
+        self.t_SHORT_TITLE.__func__.__doc__ = ('\n\n' +
+                                               re.escape(self.metadict['title']) +
+                                               '(?=\n\n)')
+        self.t_TERM.__func__.__doc__ = ('\n\n' + self.months + '\sterm,\s(' +
+                                        self.metadict['date'] + '|' +
+                                        str(int(self.metadict['date'])-1) + '|'
+                                        + str(int(self.metadict['date'])+1) +
+                                        ')(?=\n\n)')
+        
+        # Create lexer
+        self.lexer = lex.lex(module=self, reflags=re.IGNORECASE)
+
+#===============================================================================
+# TOKEN DEFINITIONS
+#===============================================================================
     def t_FULL_TITLE(self, token):
-        r'\s?=\s?(?P<title>.*?)\s?=\s?\n'
+        r'\s?=\s?(?P<title>.*?)\s?=\s?(?=\n)'
         token.value = token.lexer.lexmatch.group('title')
         return token
     
     def t_SHORT_TITLE(self, token):
         return token
     
-    def t_CASE_NUMBER(self, token):
-        return token
-        
-    def t_CASE_DATE(self, token):
+    def t_TERM(self, token):
         return token
     
+#===============================================================================
+# ERROR HANDLING
+#===============================================================================
     def t_ANY_error(self, token):
         token.lexer.skip(1)
-        self.logger.info("Illegal character {} at line {}, position {}."
-                         .format(token.value[0], token.lineno, token.lexpos))
+#        self.logger.info("Illegal character {} at line {}, position {}."
+#                         .format(token.value[0], token.lineno, token.lexpos))
         
     def analyze(self, data):
         '''Read through the text file and tokenize.'''
