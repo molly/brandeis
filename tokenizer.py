@@ -19,30 +19,52 @@
 
 import logging, os, re
 import ply.lex as lex
+from ply.lex import TOKEN
 
 class Tokenizer(object):
 #===================================================================================================
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'TITLE',
+              'FULL_TITLE',
+              'SHORT_TITLE',
+              'CASE_NUMBER',
+              'CASE_DATE',
               )
     
-    def t_TITLE(self, token):
+    
+    def __init__(self, mdict):
+        '''Initiate logging, open a file to store tokens, build the lexer.'''
+        self.logger = logging.getLogger('brandeis')
+        self.metadict = mdict
+        self.t_SHORT_TITLE.__func__.__doc__ = re.escape(self.metadict['title'])
+        self.t_CASE_NUMBER.__func__.__doc__ = re.escape(self.metadict['number'])
+        self.t_CASE_DATE.__func__.__doc__ = re.escape(self.metadict['date'])
+        self.lexer = lex.lex(module=self)
+        
+    def t_FULL_TITLE(self, token):
         r'\s?=\s?(?P<title>.*?)\s?=\s?\n'
         token.value = token.lexer.lexmatch.group('title')
         return token
     
+    def t_SHORT_TITLE(self, token):
+        return token
+    
+    @TOKEN(re.escape('531 U.S. 4'))
+    def t_CASE_NUMBER(self, token):
+        re.escape(self.metadict['number'])
+        return token
+        
+    @TOKEN(re.escape('2000'))
+    def t_CASE_DATE(self, token):
+        re.escape(self.metadict['date'])
+        return token
+    
     def t_ANY_error(self, token):
         token.lexer.skip(1)
-#        self.logger.info("Illegal character {} at line {}, position {}."
-#                         .format(token.value[0], token.lineno, token.lexpos))
+        self.logger.info("Illegal character {} at line {}, position {}."
+                         .format(token.value[0], token.lineno, token.lexpos))
         
-    def __init__(self):
-        '''Initiate logging, open a file to store tokens, build the lexer.'''
-        self.logger = logging.getLogger('brandeis')
-        self.lexer = lex.lex(module=self)
-    
     def analyze(self, data):
         '''Read through the text file and tokenize.'''
         self.lexer.input(data)
@@ -50,6 +72,7 @@ class Tokenizer(object):
         with open('tokenout.txt', 'w+', encoding='utf-8') as tokenfile:
             while True:
                 token = self.lexer.token()
+                print(token)
                 if not token:
                     break # No more input
                 l_token = [token.type, token.value]

@@ -53,9 +53,11 @@ class Parser(object):
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
-    def title(self):
-        print(self.value)
+    def full_title(self):
+        # Skip title -- it is added using the metadict.
         self.value = ''
+        
+    
         
 def get_metadata(metadict, filename):
     '''Pull the title from the file.'''

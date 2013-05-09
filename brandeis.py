@@ -65,7 +65,6 @@ else:
 for file in files:
     metadict = dict()
     validator = Validator(file)
-    parser = Parser()
     api = API()
     
     # Validate the file. Files that do not pass validation are skipped without interrupting the rest
@@ -98,7 +97,8 @@ for file in files:
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
     logger.info("Parsing {0}.".format(metadict['title']))
-    tokenizer = Tokenizer()
+    tokenizer = Tokenizer(metadict)
+    parser = Parser()
     try:
         os.mkdir('wikitext')
     except FileExistsError:

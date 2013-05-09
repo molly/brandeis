@@ -25,16 +25,17 @@ class TestTokenizer(unittest.TestCase):
     '''Test tokenizer module.'''
     
     def setUp(self):
-        self.tokenizer = Tokenizer()
+        metadict = dict()
+        self.tokenizer = Tokenizer(metadict)
         self.base_token = "LexToken\({0}, '{1}',"
     
     def tearDown(self):
         pass
     
-    def testTitle(self):
+    def testFullTitle(self):
         title = "= Name of case - 1 U.S. 111 (2000) = \n"
         result = self.tokenizer.analyze(title)[0]
-        self.assertEqual(result[0], 'TITLE',
+        self.assertEqual(result[0], 'FULL_TITLE',
                          'Title tokenizer returned incorrect token type.')
         self.assertEqual(result[1], 'Name of case - 1 U.S. 111 (2000)',
                          'Title tokenizer returned incorrect value.')
