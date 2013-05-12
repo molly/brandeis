@@ -144,7 +144,7 @@ class Cache(object):
     def __init__(self):
         try:
             os.mkdir('cache')
-        except FileExistsError:
+        except (OSError, IOError):
             pass
 
     def get_cached_volume(self, volume):
@@ -152,7 +152,7 @@ class Cache(object):
             with open('cache/' + volume, 'r', encoding='utf-8') as cache_file:
                 content = cache_file.read()
                 return content
-        except FileNotFoundError:
+        except (OSError, IOError):
             return None            
     
     def add_to_volume_cache(self, volume, content):

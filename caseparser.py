@@ -56,21 +56,12 @@ class Parser(object):
     def full_title(self):
         # Skip title -- it is added using the metadict.
         self.value = ''
-        
     
-        
-def get_metadata(metadict, filename):
-    '''Pull the title from the file.'''
-    with open(filename, 'r', encoding='utf-8') as file:
-        first_line = file.readline()
-    title = re.match(r'\s*=\s(?P<full>(?P<title>(?P<petitioner>.*?)\sv\.\s(?P<respondent>.*?))\s\-\s(?P<number>(?P<volume>\d{1,3})\s(?P<abbr>U.S.)\s(?P<page>\d{1,3}))\s\((?P<date>\d{4})\))\s=\s*', first_line)
-    metadict["full_title"] = title.group("full")
-    metadict["title"] = title.group("title")
-    metadict["petitioner"] = title.group("petitioner")
-    metadict["respondent"] = title.group("respondent")
-    metadict["number"] = title.group("number")
-    metadict["volume"] = title.group("volume")
-    metadict["title"] = title.group("title")
-    metadict["abbr"] = title.group("abbr")
-    metadict["page"] = title.group("page")
-    metadict["date"] = title.group("date")
+def strip_extraneous(content):
+    match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>', content,
+            flags = re.DOTALL)
+    if (match):
+        return match.group('content')
+
+def get_metadata(metadict, content):
+    pass

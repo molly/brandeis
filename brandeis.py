@@ -21,7 +21,7 @@
 import argparse, logging, os, re, sys
 from bexceptions import *
 from validator import Validator
-from caseparser import Parser, get_metadata
+from caseparser import Parser, get_metadata, strip_extraneous
 from api import API
 from tokenizer import Tokenizer
 
@@ -69,16 +69,27 @@ for file in files:
     
     # Validate the file. Files that do not pass validation are skipped without interrupting the rest
     # of the process.
-    try:
-        validator.validate()
-    except GroupedCase as e:
-        logger.info(e.value + " File will be skipped.")
-        continue
-    except ValidatorError as e:
-        logger.error(e.value + " File will be skipped.")
-        continue
+    #try:
+    #    validator.validate()
+    #except GroupedCase as e:
+    #    logger.info(e.value + " File will be skipped.")
+    #    continue
+    #except ValidatorError as e:
+    #    logger.error(e.value + " File will be skipped.")
+    #    continue
     
     # Get the title and other metadata
+    with open(file, 'r', encoding='utf-8') as html:
+        raw = html.read()
+        content = strip_extraneous(raw)
+        
+    if content:
+         with open(file, 'w', encoding='utf-8') as html:
+             html.write(content)
+    else:
+        print('not found')
+    break
+
     get_metadata(metadict, file)
     
     # Skip if the file exists on Wikisource already
@@ -101,7 +112,7 @@ for file in files:
     parser = Parser()
     try:
         os.mkdir('wikitext')
-    except FileExistsError:
+    except OSError:
         pass
     out_filename = 'wikitext/' + re.sub(r'[^a-zA-Z0-9_]', '', metadict['title'])
     with open(file, 'r', encoding='utf-8') as input_file:
