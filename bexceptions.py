@@ -27,6 +27,8 @@ These are the exceptions used by brandeis:
      +-- NoCaseInList
      +-- PageNotFound
      +-- MultipleCases
+    ParserError
+     +-- EntityError
 '''
 
 class ValidatorError(Exception):
@@ -38,6 +40,13 @@ class ValidatorError(Exception):
     
 class APIError(Exception):
     '''Base exception class for any Wikisource API errors.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class ParserError(Exception):
+    '''Base exception class for any parser errors.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -74,6 +83,13 @@ class PageNotFound(APIError):
     
 class MultipleCases(APIError):
     '''The case was found multiple times in the list.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class EntityError(ParserError):
+    '''The parser encountered an unrecognized HTML entity.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):

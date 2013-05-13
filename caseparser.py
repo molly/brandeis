@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging, re
+from bexceptions import EntityError
 
 class Parser(object):
     '''The parser converts the raw case text from lochner to a dictionary object. This is later
@@ -60,14 +61,23 @@ class Parser(object):
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
-    def javascript(self, value=None):
-        # Don't want any of the JavaScript
+    def ignored_tag_content(self, value=None):
+        # Don't want these tags or their content in the output.
         self.value = ''
         return self.value
     
     def ignored_tag(self, value=None):
         # Don't want these tags in the output.
         self.value = ''
+        return self.value
+    
+    def paragraph(self, value=None):
+        # Insert line break if end of paragraph. Ignore otherwise.
+        # TODO: Handle other formatting.
+        if self.value[0] == '/':
+            self.value = '\n\n'
+        else:
+            self.value = ''
         return self.value
         
     def link(self, value=None):
@@ -101,9 +111,26 @@ class Parser(object):
         self.value = ''
         return self.value
     
+    def html_entity(self, value=None):
+        entity = value if value else self.value
+        if entity == "quot":
+            self.value = '"'
+        elif entity == "sect":
+            self.value = '§'
+        elif entity == "amp":
+            self.value = '&'
+        else:
+            raise EntityError('Unknown entity: ' + entity)
+        return self.value
+    
     def newline(self, value=None):
         # Newlines should be preserved. Extraneous ones will be removed in post-processing.
         self.value = '\n'
+        return self.value
+    
+    def whitespace(self, value=None):
+        # Use spaces instead of tabs.
+        self.value = ' '
         return self.value
     
     def supremelinks(self, value=None):

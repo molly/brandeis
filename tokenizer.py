@@ -25,12 +25,15 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'JAVASCRIPT',         # <script>...</script>
-              'IGNORED_TAG',        # Various tags we don't need to keep
+              'IGNORED_TAG_CONTENT',# For tags where we want to ignore the tags AND the content
+              'IGNORED_TAG',        # Various tags we don't need to keep (content is preserved)
+              'PARAGRAPH',          # <p>, </p>
               'LINK',               # <a> tags
               'COMMENT',            # <!-- comment -->
               'TITLE',              # The long-form case title
+              'HTML_ENTITY',        # &thing;
               'NEWLINE',            # Line break
+              'WHITESPACE',         # Tabs, spaces
               'SUPREMELINKS',       # <ul class="supremelinks">
               )
     
@@ -52,14 +55,19 @@ class Tokenizer(object):
 #===============================================================================
 # TOKEN DEFINITIONS
 #===============================================================================
-    def t_JAVASCRIPT(self, token):
-        r'<script>(.|\s)*?<\/script>'
+    def t_IGNORED_TAG_CONTENT(self, token):
+        r'<(script|span)(.*?)>(.|\s)*?<\/(script|span)>'
         return token
     
     def t_IGNORED_TAG(self, token):
-        r'<\/?(?P<tag>div|DIV)((.|\s)*?)>'
+        r'<\/?(?P<tag>div|DIV|span|SPAN)((.|\s)*?)>'
         token.value = token.lexer.lexmatch.group('tag')
         return token
+    
+    def t_PARAGRAPH(self, token):
+        r'<(?P<end>\/?)p(?P<info>.*?)>'
+        token.value = token.lexer.lexmatch.group('end', 'info')
+        return token        
     
     def t_LINK(self, token):
         r'<[aA]\s(?P<info>.*?)>(?P<text>.*?)<\/[aA]>'
@@ -75,8 +83,17 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('title')
         return token
     
+    def t_HTML_ENTITY(self, token):
+        r'&(?P<entity>[a-z]+);'
+        token.value = token.lexer.lexmatch.group('entity')
+        return token
+    
     def t_NEWLINE(self, token):
         r'(\n|\r|<br\s?\/?>)'
+        return token
+    
+    def t_WHITESPACE(self, token):
+        r'[ \t]'
         return token
     
     def t_SUPREMELINKS(self, token):

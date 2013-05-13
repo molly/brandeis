@@ -51,6 +51,13 @@ class TestParser(unittest.TestCase):
         self.parser.supremelinks(token)
         if 'Syllabus' not in self.test_dict['sections'] or 'Case' not in self.test_dict['sections']:
             self.fail('Incorrect or no sections added for supreme links.')
-
+            
+    def testGoodEntity(self):
+        content = 'quot'
+        self.assertEqual(self.parser.html_entity(content), '"', 'HTML entity gave incorrect value.')
+        
+    def testBadEntity(self):
+        content = 'qot'
+        self.assertRaises(EntityError, self.parser.html_entity, content)
 if __name__ == '__main__':
     unittest.main()
