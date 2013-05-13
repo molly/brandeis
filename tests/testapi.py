@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from api import API
-from brandeis.bexceptions import *
+from bexceptions import *
 import unittest
 
 class TestAPIFunctions(unittest.TestCase):
@@ -82,5 +82,3 @@ class TestAPIFunctions(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-            
-    

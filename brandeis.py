@@ -69,14 +69,14 @@ for file in files:
     
     # Validate the file. Files that do not pass validation are skipped without interrupting the rest
     # of the process.
-    #try:
-    #    validator.validate()
-    #except GroupedCase as e:
-    #    logger.info(e.value + " File will be skipped.")
-    #    continue
-    #except ValidatorError as e:
-    #    logger.error(e.value + " File will be skipped.")
-    #    continue
+    try:
+        validator.validate()
+    except GroupedCase as e:
+        logger.info(e.value + " File will be skipped.")
+        continue
+    except ValidatorError as e:
+        logger.error(e.value + " File will be skipped.")
+        continue
     
     # Get the title and other metadata
     with open(file, 'r', encoding='utf-8') as html:

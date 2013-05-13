@@ -40,13 +40,15 @@ class Validator(object):
             raise e
     
     def validateTitlePlacement(self):
-        '''Check a file to make sure it has a properly-formatted title. The title should be the
-        first line of the text file, and of the format:
-         = Title = 
-        There should a leading and trailing space.'''
-        first_line = self.file.readline()
-        self.file.seek(0, 0)
-        title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
+        '''Check a file to make sure it has a properly-formatted title. The title should be in the
+        first line of the HTML file that isn't whitespace.'''
+        while True:
+            first_line = self.file.readline()
+            match = re.match(r'^[\n\s\t\r]+$', first_line, re.MULTILINE)
+            if not match:
+                break
+        self.file.seek(0, 0) # Reset position in file
+        title = re.match(r'[\s\t]*<h1>(.*?)<\/h1>', first_line)
         if not title:
             raise BadTitle("Poorly placed title in {}.".format(self.filename))
         
@@ -57,13 +59,18 @@ class Validator(object):
         with 1-3 digits in each number. The date is of the format:
         (####)
         The full format of the title is:
-         = Title - Number Date = 
+        Title - Number Date
         '''
-        first_line = self.file.readline()
-        self.file.seek(0, 0)
-        title = re.match(r'^\s*=\s.*\s=\s*$', first_line, re.MULTILINE)
-        parts = re.match(r'\s*=\s(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))\s=\s*',
-                         title.group())
+        while True:
+            first_line = self.file.readline()
+            match = re.match(r'^[\n\s\t\r]+$', first_line, re.MULTILINE)
+            if not match:
+                break
+        self.file.seek(0, 0) # Reset position in file
+        match = re.match(r'[\s\t]*<h1>(?P<title>.*?)<\/h1>', first_line)
+        title = match.group('title')
+        parts = re.match(r'(?P<full>(?P<title>.*?)\s\-\s(?P<number>.*?)\s\((?P<date>\d{4})\))',
+                         title)
         if not parts:
             raise BadTitle("Title in {0} does not consist of the regular parts: {1}."
                            .format(self.filename, first_line))

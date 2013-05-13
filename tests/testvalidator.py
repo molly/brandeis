@@ -33,7 +33,7 @@ class TestFileValidation(unittest.TestCase):
     
     def testGoodTitlePlacement(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write('  = Foo v. Bar - Some other stuff = \n')
+            self.buffer.write('\n\n\t\t\t\t<h1>Person v. Person - 100 U.S. 25 (2000)</h1>')
         v = Validator('buffer.txt')
         try:
             v.validateTitlePlacement()
@@ -42,7 +42,7 @@ class TestFileValidation(unittest.TestCase):
     
     def testPoorlyPlacedTitle(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write(' There\'s text before my title!\n = But there is a title =\n')
+            self.buffer.write('\n\n\t\t\t\t<div></div><h1>Person v. Person - 100 U.S. 25 (2000)</h1>')
         v = Validator('buffer.txt')
         with self.assertRaises(BadTitle, msg='Validator passed a title that was not at the '
                                'beginning of the file.'):
@@ -50,14 +50,14 @@ class TestFileValidation(unittest.TestCase):
         
     def testNoTitle(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write(' There\s no title at all!\n')
+            self.buffer.write('\n\n\t\t\t')
         v = Validator('buffer.txt')
         with self.assertRaises(BadTitle, msg='Validator passed a file with no title.'):
             v.validateTitlePlacement()
     
     def testGoodTitleParts(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write('= Foo v. Bar - 100 U.S. 200 (2013) =')
+            self.buffer.write('\t\t\t\t<h1>Foo v. Bar - 100 U.S. 200 (2013)</h1><div>Extra stuff</div>')
         v = Validator('buffer.txt')
         try:
             v.validateTitleParts()
@@ -66,7 +66,7 @@ class TestFileValidation(unittest.TestCase):
     
     def testIdentifyCaseGroup(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write('= Group of Cases - 100 U.S. 200 (2013) =')
+            self.buffer.write('\t\t\t<h1>Group of Cases - 100 U.S. 200 (2013)</h1>\t\t\t')
         v = Validator('buffer.txt')
         with self.assertRaises(GroupedCase, msg='Validator failed to identify a group of cases'
                                ' as such.'):
@@ -74,7 +74,7 @@ class TestFileValidation(unittest.TestCase):
     
     def testBadTitleDate(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write('= Foo v. Bar - 100 U.S. 200 (203) =')
+            self.buffer.write('<h1>Foo v. Bar - 100 U.S. 200 (203)</h1>')
         v = Validator('buffer.txt')
         with self.assertRaises(BadTitle, msg='Validator passed a title containing an improperly'
                          'formatted date.'):
@@ -82,7 +82,7 @@ class TestFileValidation(unittest.TestCase):
         
     def testBadTitleNumber(self):
         with open('buffer.txt', 'w', encoding='utf-8') as self.buffer:
-            self.buffer.write('= Foo v. Bar - U.S. 200 (2013) =')
+            self.buffer.write('<h1>Foo v. Bar - U.S. 200 (2013)</h1>')
         v = Validator('buffer.txt')
         with self.assertRaises(BadTitle, msg='Validator passed a title containing an improperly'
                          'formatted case number.'):
