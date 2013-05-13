@@ -26,6 +26,7 @@ class Tokenizer(object):
 #===================================================================================================
     tokens = (
               'IGNORED_TAG',        # Various tags we don't need to keep
+              'LINK',               # <a> tags
               'COMMENT',            # <!-- comment -->
               'TITLE',              # The long-form case title
               'NEWLINE',            # Line break
@@ -50,10 +51,15 @@ class Tokenizer(object):
 # TOKEN DEFINITIONS
 #===============================================================================
     def t_IGNORED_TAG(self, token):
-        r'<\/?(?P<tag>div)(.*?)>'
+        r'<\/?(?P<tag>div|DIV)(.*?)>'
         token.value = token.lexer.lexmatch.group('tag')
         return token
     
+    def t_LINK(self, token):
+        r'<[aA]\s(?P<info>.*?)>(?P<text>.*?)<\/[aA]>'
+        token.value = token.lexer.lexmatch.group('info', 'text')
+        return token
+        
     def t_COMMENT(self, token):
         r'<!--(.*?)-->'
         return token
@@ -81,7 +87,7 @@ class Tokenizer(object):
         with open('tokenout.txt', 'w+', encoding='utf-8') as tokenfile:
             while True:
                 token = self.lexer.token()
-                print(token)
+                #print(token)
                 if not token:
                     break # No more input
                 l_token = [token.type, token.value]

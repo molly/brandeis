@@ -49,6 +49,15 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(result[1], 'div',
                          'Ignored tag tokenizer returned incorrect value.')
         
+    def testLink(self):
+        content = "<a class=\"page-name\">90</a>"
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match link.')
+        self.assertEqual(result[0], 'LINK',
+                         'Link tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], ('class="page-name"', '90'),
+                         'Link tokenizer returned incorrect value.')
+        
     def testComment(self):
         content = "<!-- I'm useless information! -->"
         result = self.tokenizer.analyze(content)

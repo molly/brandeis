@@ -30,7 +30,8 @@ class Parser(object):
 
     def parse(self, tokens, output_file):
         '''Run the parser functions on the file.'''
-        self.output = output_file
+        if output_file:
+            self.output = output_file
         self.tokens = tokens
         self.dispatch()
         
@@ -41,34 +42,65 @@ class Parser(object):
                 command = 'self.{0}()'.format(token[0].lower())
                 try:
                     exec(command)
-                except:
-                    self.logger.error("Unable to run command " + command);
+                except AttributeError as e:
+                    self.logger.error("No command for " + command + ". " + repr(e));
+                    break;
+                except Exception as e:
+                    self.logger.error("Exception while parsing: " + repr(e));
                     break;
                 else:
                     self.write(self.value)
     
     def write(self, text):
         if type(text) is str:
-            self.output.write(text)
+            if self.output:
+                self.output.write(text)
+                
             
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
-    def ignored_tag(self):
+    def ignored_tag(self, value=None):
         # Don't want these tags in the output.
         self.value = ''
+        return self.value
         
-    def comment(self):
+    def link(self, value=None):
+        # Extract necessary information to determine if they should be kept
+        value = value if value else self.value
+        info = value[0]
+        text = value[1]
+        m_class = re.search(r'class\="(?P<class>.*?)"', info)
+        if m_class:
+            link_class = m_class.group('class')
+            if link_class == 'page-name':
+                self.value = '\nPAGE ' + text + '\n'
+                return self.value
+        else:
+            m_href = re.search(r'href\="(?P<href>.*?)"', info)
+            if m_href:
+                href = m_href.group('href')
+                if '/cases/federal/us/' in href:
+                    self.value = text
+                    return self.value
+        self.value = ''
+        return self.value
+        
+    def comment(self, value=None):
         # Don't want comments in the output.
-        self.value = ''     
+        self.value = ''
+        return self.value
     
-    def title(self):
+    def title(self, value=None):
         # This will be added from the metadict
         self.value = ''
+        return self.value
     
-    def newline(self):
+    def newline(self, value=None):
         # Newlines should be preserved. Extraneous ones will be removed in post-processing.
-        pass
+        if value:
+            self.value = value
+        return self.value
     
 def strip_extraneous(content):
     match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)',
