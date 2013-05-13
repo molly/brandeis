@@ -25,7 +25,10 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'IGNORED_TAG',         # The long-form case title
+              'IGNORED_TAG',        # Various tags we don't need to keep
+              'COMMENT',            # <!-- comment -->
+              'TITLE',              # The long-form case title
+              'NEWLINE',            # Line break
               )
     
     def __init__(self, mdict):
@@ -51,6 +54,18 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('tag')
         return token
     
+    def t_COMMENT(self, token):
+        r'<!--(.*?)-->'
+        return token
+    
+    def t_TITLE(self, token):
+        r'<h1>(?P<title>.*?)<\/h1>'
+        token.value = token.lexer.lexmatch.group('title')
+        return token
+    
+    def t_NEWLINE(self, token):
+        r'[\n\r]'
+        return token
 #===============================================================================
 # ERROR HANDLING
 #===============================================================================

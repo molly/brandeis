@@ -57,6 +57,18 @@ class Parser(object):
     def ignored_tag(self):
         # Don't want these tags in the output.
         self.value = ''
+        
+    def comment(self):
+        # Don't want comments in the output.
+        self.value = ''     
+    
+    def title(self):
+        # This will be added from the metadict
+        self.value = ''
+    
+    def newline(self):
+        # Newlines should be preserved. Extraneous ones will be removed in post-processing.
+        pass
     
 def strip_extraneous(content):
     match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)',

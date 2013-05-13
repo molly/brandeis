@@ -33,7 +33,7 @@ class TestTokenizer(unittest.TestCase):
                            'page': '111',
                            'title': 'Person One v. Person Two',
                            'date': '2000',
-                           'full_title': '= Person One v. Person Two - 1 U.S. 111 (2000) ='}
+                           'full_title': 'Person One v. Person Two - 1 U.S. 111 (2000)'}
         self.tokenizer = Tokenizer(self.test_dict)
         self.base_token = "LexToken\({0}, '{1}',"
     
@@ -48,7 +48,33 @@ class TestTokenizer(unittest.TestCase):
                          'Ignored tag tokenizer returned incorrect token type.')
         self.assertEqual(result[1], 'div',
                          'Ignored tag tokenizer returned incorrect value.')
-    
+        
+    def testComment(self):
+        content = "<!-- I'm useless information! -->"
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match comment.')
+        self.assertEqual(result[0], 'COMMENT',
+                         'Comment tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], '<!-- I\'m useless information! -->',
+                         'Comment tokenizer returned incorrect value.')
+        
+    def testTitle(self):
+        content = "<h1>" + self.test_dict['full_title'] + "</h1>"
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match title.')
+        self.assertEqual(result[0], 'TITLE',
+                         'Title tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], 'Person One v. Person Two - 1 U.S. 111 (2000)',
+                         'Title tokenizer returned incorrect value.')
+                
+    def testNewline(self):
+        content = "\n"
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match newline.')
+        self.assertEqual(result[0], 'NEWLINE',
+                         'Newline tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], '\n',
+                         'Newline tokenizer returned incorrect value.')
 
 
 if __name__ == '__main__':
