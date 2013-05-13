@@ -145,6 +145,31 @@ class Parser(object):
         self.value = ''
         return self.value
     
+    def italics(self, value=None):
+        # Wraps text in double quotes. Also removes any leading or trailing spaces inside the
+        # italicized text, just to make it look nicer.
+        if value:
+            self.value = value
+        begin = end = "''"
+        if self.value[0] == ' ':
+            begin = " ''"
+            self.value = self.value[1:]
+        if self.value[-1] == ' ':
+            end = "'' "
+            self.value = self.value[:-1]
+        self.value = begin + self.value + end
+        return self.value
+    
+    def word(self, value=None):
+        if value:
+            self.value = value
+        return self.value
+    
+    def number(self, value=None):
+        if value:
+            self.value = value
+        return self.value
+    
 def strip_extraneous(content):
     match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)',
                       content, flags = re.DOTALL)

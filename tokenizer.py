@@ -35,6 +35,9 @@ class Tokenizer(object):
               'NEWLINE',            # Line break
               'WHITESPACE',         # Tabs, spaces
               'SUPREMELINKS',       # <ul class="supremelinks">
+              'ITALICS',            # <i></i>
+              'WORD',
+              'NUMBER',
               )
     
     def __init__(self, mdict):
@@ -99,6 +102,19 @@ class Tokenizer(object):
     def t_SUPREMELINKS(self, token):
         r'<ul\sclass\="supremelinks">(?P<content>(.|\s)*?)<\/ul>'
         token.value = token.lexer.lexmatch.group('content')
+        return token
+    
+    def t_ITALICS(self, token):
+        r'<i>(?P<content>.*?)<\/i>'
+        token.value = token.lexer.lexmatch.group('content')
+        return token
+    
+    def t_WORD(self, token):
+        r'[a-zA-z]+'
+        return token
+    
+    def t_NUMBER(self, token):
+        r'[0-9]+'
         return token
     
 #===============================================================================

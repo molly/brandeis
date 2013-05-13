@@ -57,7 +57,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(self.parser.html_entity(content), '"', 'HTML entity gave incorrect value.')
         
     def testBadEntity(self):
-        content = 'qot'
+        content = 'foo'
         self.assertRaises(EntityError, self.parser.html_entity, content)
+        
 if __name__ == '__main__':
     unittest.main()
