@@ -25,10 +25,7 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'FULL_TITLE',         # The long-form case title
-              'SHORT_TITLE',        # Case name
-              'TERM',               # "January Term, 2000"
-              'SEPARATOR',          # "Syllabus", "Justice Foo, concurring"
+              'IGNORED_TAG',         # The long-form case title
               )
     
     def __init__(self, mdict):
@@ -42,13 +39,6 @@ class Tokenizer(object):
         
         # Define any regexes that rely on external data
         title_no_case = self.ignore_case(re.escape(self.metadict['title']))
-        self.t_SHORT_TITLE.__func__.__doc__ = ('\n\n' + title_no_case +
-                                               '(?=\n\n)')
-        self.t_TERM.__func__.__doc__ = ('\n\n' + self.months + '\s[Tt][Ee][Rr][Mm],\s(' +
-                                        self.metadict['date'] + '|' +
-                                        str(int(self.metadict['date'])-1) + '|'
-                                        + str(int(self.metadict['date'])+1) +
-                                        ')(?=\n\n)')
         
         # Create lexer
         self.lexer = lex.lex(module=self)
@@ -56,19 +46,9 @@ class Tokenizer(object):
 #===============================================================================
 # TOKEN DEFINITIONS
 #===============================================================================
-    def t_FULL_TITLE(self, token):
-        r'\s?=\s?(?P<title>.*?)\s?=\s?(?=\n)'
-        token.value = token.lexer.lexmatch.group('title')
-        return token
-    
-    def t_SHORT_TITLE(self, token):
-        return token
-    
-    def t_TERM(self, token):
-        return token
-    
-    def t_SEPARATOR(self, token):
-        r'\n\n(syllabus|Justice\s(\S+),\sconcurring)(?=\n\n)'
+    def t_IGNORED_TAG(self, token):
+        r'<\/?(?P<tag>div)(.*?)>'
+        token.value = token.lexer.lexmatch.group('tag')
         return token
     
 #===============================================================================

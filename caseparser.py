@@ -23,9 +23,10 @@ class Parser(object):
     '''The parser converts the raw case text from lochner to a dictionary object. This is later
     converted to wikitext to be uploaded.'''
     
-    def __init__(self):
+    def __init__(self, metadict):
         self.logger = logging.getLogger('brandeis')
         self.output = None
+        self.metadict = metadict
 
     def parse(self, tokens, output_file):
         '''Run the parser functions on the file.'''
@@ -53,13 +54,13 @@ class Parser(object):
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
-    def full_title(self):
-        # Skip title -- it is added using the metadict.
+    def ignored_tag(self):
+        # Don't want these tags in the output.
         self.value = ''
     
 def strip_extraneous(content):
-    match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)', content,
-            flags = re.DOTALL)
+    match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)',
+                      content, flags = re.DOTALL)
     if (match):
         return match.group('content') + match.group('source')
     else:

@@ -89,8 +89,8 @@ for file in files:
     
     # Get the title and other metadata
     get_metadata(metadict, file)
-#    
-#    # Skip if the file exists on Wikisource already
+    
+    # Skip if the file exists on Wikisource already
 #    try:
 #        line = api.get_case_line(metadict['title'], metadict['volume'], metadict['page'])
 #    except NoCaseInList as e:
@@ -103,19 +103,20 @@ for file in files:
 #        if api.case_exists(line):
 #            logger.info(metadict['title'] + " exists on Wikisource. File will be skipped.")
 #            continue
-#    
-#    # At this point, we have a valid text file for a case that does not exist on Wikisource
-#    logger.info("Parsing {0}.".format(metadict['title']))
-#    tokenizer = Tokenizer(metadict)
-#    parser = Parser()
-#    try:
-#        os.mkdir('wikitext')
-#    except OSError:
-#        pass
-#    out_filename = 'wikitext/' + re.sub(r'[^a-zA-Z0-9_]', '', metadict['title'])
-#    with open(file, 'r', encoding='utf-8') as input_file:
-#        raw_text = input_file.read()
-#        token_stream = tokenizer.analyze(raw_text)
-#    with open(out_filename, 'w', encoding='utf-8') as output_file:
-#        parser.parse(token_stream, output_file)
+    
+    # At this point, we have a valid text file for a case that does not exist on Wikisource
+    logger.info("Parsing {0}.".format(metadict['title']))
+    tokenizer = Tokenizer(metadict)
+    parser = Parser(metadict)
+    try:
+        os.mkdir('wikitext')
+    except OSError:
+        pass
+    out_filename = 'wikitext/' + re.sub(r'[^a-zA-Z0-9_]', '', metadict['title'])
+    
+    with open(file, 'r', encoding='utf-8') as input_file:
+        raw_text = input_file.read()
+        token_stream = tokenizer.analyze(raw_text)
+    with open(out_filename, 'w', encoding='utf-8') as output_file:
+        parser.parse(token_stream, output_file)
         

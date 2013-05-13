@@ -40,32 +40,16 @@ class TestTokenizer(unittest.TestCase):
     def tearDown(self):
         pass
     
-    def testFullTitle(self):
-        content = "= Person One v. Person Two - 1 U.S. 111 (2000) = \n"
+    def testIgnoredTag(self):
+        content = "<div class=\"htmlclass\">"
         result = self.tokenizer.analyze(content)
-        result = result[0] if result else self.fail('Failed to match full title.')
-        self.assertEqual(result[0], 'FULL_TITLE',
-                         'Title tokenizer returned incorrect token type.')
-        self.assertEqual(result[1], 'Person One v. Person Two - 1 U.S. 111 (2000)',
-                         'Title tokenizer returned incorrect value.')
+        result = result[0] if result else self.fail('Failed to match ignored tag.')
+        self.assertEqual(result[0], 'IGNORED_TAG',
+                         'Ignored tag tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], 'div',
+                         'Ignored tag tokenizer returned incorrect value.')
     
-    def testShortTitle(self):
-        content = "\n\nPerson One v. Person Two\n\n"
-        result = self.tokenizer.analyze(content)
-        result = result[0] if result else self.fail('Failed to match short title.')   
-        self.assertEqual(result[0], 'SHORT_TITLE',
-                         'Short title tokenizer returned incorrect token type.')
-        self.assertEqual(result[1], 'Person One v. Person Two',
-                         'Short title tokenizer returned incorrect value.')
-        
-    def testTerm(self):
-        content = "\n\nJanuary Term, 1999\n\n"
-        result = self.tokenizer.analyze(content)
-        result = result[0] if result else self.fail('Failed to match term.')            
-        self.assertEqual(result[0], 'TERM',
-                         'Term tokenizer returned incorrect token type.')
-        self.assertEqual(result[1], 'January Term, 1999',
-                         'Term tokenizer returned incorrect value.')
+
 
 if __name__ == '__main__':
     unittest.main()
