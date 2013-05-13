@@ -58,10 +58,29 @@ class Parser(object):
         self.value = ''
     
 def strip_extraneous(content):
-    match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>', content,
+    match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)', content,
             flags = re.DOTALL)
     if (match):
-        return match.group('content')
-
-def get_metadata(metadict, content):
-    pass
+        return match.group('content') + match.group('source')
+    else:
+        return None
+    
+def get_metadata(metadict, filename):
+    '''Pull the title from the file.'''
+    with open(filename, 'r', encoding='utf-8') as file:
+        while True:
+            first_line = file.readline()
+            match = re.match(r'^[\n\s\t\r]+$', first_line, re.MULTILINE)
+            if not match:
+                break
+    title = re.match(r'[\s\t]*<h1>(?P<full>(?P<title>(?P<petitioner>.*?)\sv\.\s(?P<respondent>.*?))\s\-\s(?P<number>(?P<volume>\d{1,3})\s(?P<abbr>U.S.)\s(?P<page>\d{1,3}))\s\((?P<date>\d{4})\))</h1>', first_line)
+    metadict["full_title"] = title.group("full")
+    metadict["title"] = title.group("title")
+    metadict["petitioner"] = title.group("petitioner")
+    metadict["respondent"] = title.group("respondent")
+    metadict["number"] = title.group("number")
+    metadict["volume"] = title.group("volume")
+    metadict["title"] = title.group("title")
+    metadict["abbr"] = title.group("abbr")
+    metadict["page"] = title.group("page")
+    metadict["date"] = title.group("date")
