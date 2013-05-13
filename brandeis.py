@@ -24,6 +24,7 @@ from validator import Validator
 from caseparser import Parser, get_metadata, strip_extraneous
 from api import API
 from tokenizer import Tokenizer
+from postprocessor import Postprocessor
 
 # Set up logging
 logger = logging.getLogger('brandeis')
@@ -113,10 +114,12 @@ for file in files:
     except OSError:
         pass
     out_filename = 'wikitext/' + re.sub(r'[^a-zA-Z0-9_]', '', metadict['title'])
+    postprocessor = Postprocessor(out_filename)
     
     with open(file, 'r', encoding='utf-8') as input_file:
         raw_text = input_file.read()
         token_stream = tokenizer.analyze(raw_text)
     with open(out_filename, 'w', encoding='utf-8') as output_file:
         parser.parse(token_stream, output_file)
+    postprocessor.process()
         

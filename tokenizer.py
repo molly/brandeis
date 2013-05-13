@@ -30,14 +30,16 @@ class Tokenizer(object):
               'PARAGRAPH',          # <p>, </p>
               'LINK',               # <a> tags
               'COMMENT',            # <!-- comment -->
-              'TITLE',              # The long-form case title
+              'HEADER',             # <h1>, <h2>, etc.
               'HTML_ENTITY',        # &thing;
-              'NEWLINE',            # Line break
               'WHITESPACE',         # Tabs, spaces
               'SUPREMELINKS',       # <ul class="supremelinks">
-              'ITALICS',            # <i></i>
+              'ITALICS',            # <i>
+              'BOLD',               # <b>
+              'NEWLINE',            # Newline
               'WORD',
               'NUMBER',
+              'PUNCTUATION',
               )
     
     def __init__(self, mdict):
@@ -54,21 +56,21 @@ class Tokenizer(object):
         
         # Create lexer
         self.lexer = lex.lex(module=self)
-
+        
 #===============================================================================
 # TOKEN DEFINITIONS
 #===============================================================================
     def t_IGNORED_TAG_CONTENT(self, token):
-        r'<(script|span)(.*?)>(.|\s)*?<\/(script|span)>'
+        r'<(script|SCRIPT)(.*?)>(.|\s)*?<\/(script|SCRIPT)>'
         return token
     
     def t_IGNORED_TAG(self, token):
-        r'<\/?(?P<tag>div|DIV|span|SPAN)((.|\s)*?)>'
+        r'<\/?(?P<tag>div|DIV|span|SPAN|hr|HR)((.|\s)*?)>'
         token.value = token.lexer.lexmatch.group('tag')
         return token
     
     def t_PARAGRAPH(self, token):
-        r'<(?P<end>\/?)p(?P<info>.*?)>'
+        r'<(?P<end>\/?)[Pp](?P<info>.*?)>'
         token.value = token.lexer.lexmatch.group('end', 'info')
         return token        
     
@@ -81,9 +83,9 @@ class Tokenizer(object):
         r'<!--((.|\s)*?)-->'
         return token
     
-    def t_TITLE(self, token):
-        r'<h1>(?P<title>.*?)<\/h1>'
-        token.value = token.lexer.lexmatch.group('title')
+    def t_HEADER(self, token):
+        r'<[Hh](?P<level>[1-6])>(?P<content>.*?)<\/[Hh][1-6]>'
+        token.value = token.lexer.lexmatch.group('level', 'content')
         return token
     
     def t_HTML_ENTITY(self, token):
@@ -91,22 +93,25 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('entity')
         return token
     
-    def t_NEWLINE(self, token):
-        r'(\n|\r|<br\s?\/?>)'
-        return token
-    
     def t_WHITESPACE(self, token):
         r'[ \t]'
         return token
     
     def t_SUPREMELINKS(self, token):
-        r'<ul\sclass\="supremelinks">(?P<content>(.|\s)*?)<\/ul>'
+        r'<(ul|UL)\s(class|CLASS)\="supremelinks">(?P<content>(.|\s)*?)<\/(ul|UL)>'
         token.value = token.lexer.lexmatch.group('content')
         return token
     
     def t_ITALICS(self, token):
-        r'<i>(?P<content>.*?)<\/i>'
-        token.value = token.lexer.lexmatch.group('content')
+        r'<\/?[Ii]>'
+        return token
+    
+    def t_BOLD(self, token):
+        r'<\/?(B|b|strong|STRONG)>'
+        return token
+    
+    def t_NEWLINE(self, token):
+        r'(\n|\r|<[Bb][Rr]\s?\/?>)'
         return token
     
     def t_WORD(self, token):
@@ -115,6 +120,10 @@ class Tokenizer(object):
     
     def t_NUMBER(self, token):
         r'[0-9]+'
+        return token
+    
+    def t_PUNCTUATION(self, token):
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?~°–—/]"""
         return token
     
 #===============================================================================

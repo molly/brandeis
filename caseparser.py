@@ -74,7 +74,7 @@ class Parser(object):
     def paragraph(self, value=None):
         # Insert line break if end of paragraph. Ignore otherwise.
         # TODO: Handle other formatting.
-        if self.value[0] == '/':
+        if self.value[0] == '':
             self.value = '\n\n'
         else:
             self.value = ''
@@ -106,9 +106,20 @@ class Parser(object):
         self.value = ''
         return self.value
     
-    def title(self, value=None):
+    def header(self, value=None):
         # This will be added from the metadict
-        self.value = ''
+        value = value if value else self.value
+        level = value[0]
+        content = value[1]
+        if level == '6' or level == '5' or level == '4':
+            self.value = "'''" + content + "'''"
+        elif level == '3':
+            self.value = '{{larger|' + content + '}}'
+        elif level == '2':
+            self.value = '{{x-larger|' + content + '}}'
+        elif level == '1':
+            self.value = '{{xx-larger|' + content + '}}'
+        self.value = self.value + '\n\n'
         return self.value
     
     def html_entity(self, value=None):
@@ -121,11 +132,6 @@ class Parser(object):
             self.value = '&'
         else:
             raise EntityError('Unknown entity: ' + entity)
-        return self.value
-    
-    def newline(self, value=None):
-        # Newlines should be preserved. Extraneous ones will be removed in post-processing.
-        self.value = '\n'
         return self.value
     
     def whitespace(self, value=None):
@@ -146,18 +152,13 @@ class Parser(object):
         return self.value
     
     def italics(self, value=None):
-        # Wraps text in double quotes. Also removes any leading or trailing spaces inside the
-        # italicized text, just to make it look nicer.
-        if value:
-            self.value = value
-        begin = end = "''"
-        if self.value[0] == ' ':
-            begin = " ''"
-            self.value = self.value[1:]
-        if self.value[-1] == ' ':
-            end = "'' "
-            self.value = self.value[:-1]
-        self.value = begin + self.value + end
+        # Wraps text in double quotes.
+        self.value = "''"
+        return self.value
+    
+    def bold(self, value=None):
+        # Wraps text in triple quotes.
+        self.value = "'''"
         return self.value
     
     def word(self, value=None):
@@ -165,7 +166,17 @@ class Parser(object):
             self.value = value
         return self.value
     
+    def newline(self, value=None):
+        # Newlines should be preserved. Extraneous ones will be removed in post-processing.
+        self.value = '\n'
+        return self.value
+    
     def number(self, value=None):
+        if value:
+            self.value = value
+        return self.value
+    
+    def punctuation(self, value=None):
         if value:
             self.value = value
         return self.value
