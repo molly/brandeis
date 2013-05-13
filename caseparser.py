@@ -60,6 +60,11 @@ class Parser(object):
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
+    def javascript(self, value=None):
+        # Don't want any of the JavaScript
+        self.value = ''
+        return self.value
+    
     def ignored_tag(self, value=None):
         # Don't want these tags in the output.
         self.value = ''
@@ -98,8 +103,19 @@ class Parser(object):
     
     def newline(self, value=None):
         # Newlines should be preserved. Extraneous ones will be removed in post-processing.
-        if value:
-            self.value = value
+        self.value = '\n'
+        return self.value
+    
+    def supremelinks(self, value=None):
+        # List of sections. Shouldn't be added to text, but should be preserved in metadict.
+        self.metadict['sections'] = []
+        content = value if value else self.value
+        content = re.sub(r'\s', '', content)
+        strings = re.findall(r'(?<=>)(.*?)(?=<)', content)
+        for string in strings:
+            if len(string) > 0:
+                self.metadict['sections'].append(string)
+        self.value = ''
         return self.value
     
 def strip_extraneous(content):

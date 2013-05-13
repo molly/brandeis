@@ -40,6 +40,15 @@ class TestTokenizer(unittest.TestCase):
     def tearDown(self):
         pass
     
+    def testJavaScript(self):
+        content = '<script>I\'m Javascript!</script>'
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match Javascript.')
+        self.assertEqual(result[0], 'JAVASCRIPT',
+                         'Javascript tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], '<script>I\'m Javascript!</script>',
+                         'Javascript tokenizer returned incorrect value.')
+    
     def testIgnoredTag(self):
         content = "<div class=\"htmlclass\">"
         result = self.tokenizer.analyze(content)
@@ -84,6 +93,15 @@ class TestTokenizer(unittest.TestCase):
                          'Newline tokenizer returned incorrect token type.')
         self.assertEqual(result[1], '\n',
                          'Newline tokenizer returned incorrect value.')
+        
+    def testSupremeLinks(self):
+        content = "<ul class=\"supremelinks\"><li>Link</li></ul>"
+        result = self.tokenizer.analyze(content)
+        result = result[0] if result else self.fail('Failed to match supreme links.')
+        self.assertEqual(result[0], 'SUPREMELINKS',
+                         'Supreme links tokenizer returned incorrect token type.')
+        self.assertEqual(result[1], '<li>Link</li>',
+                         'Supreme links tokenizer returned incorrect value.')
 
 
 if __name__ == '__main__':

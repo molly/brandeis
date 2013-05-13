@@ -25,11 +25,13 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
+              'JAVASCRIPT',         # <script>...</script>
               'IGNORED_TAG',        # Various tags we don't need to keep
               'LINK',               # <a> tags
               'COMMENT',            # <!-- comment -->
               'TITLE',              # The long-form case title
               'NEWLINE',            # Line break
+              'SUPREMELINKS',       # <ul class="supremelinks">
               )
     
     def __init__(self, mdict):
@@ -50,8 +52,12 @@ class Tokenizer(object):
 #===============================================================================
 # TOKEN DEFINITIONS
 #===============================================================================
+    def t_JAVASCRIPT(self, token):
+        r'<script>(.|\s)*?<\/script>'
+        return token
+    
     def t_IGNORED_TAG(self, token):
-        r'<\/?(?P<tag>div|DIV)(.*?)>'
+        r'<\/?(?P<tag>div|DIV)((.|\s)*?)>'
         token.value = token.lexer.lexmatch.group('tag')
         return token
     
@@ -61,7 +67,7 @@ class Tokenizer(object):
         return token
         
     def t_COMMENT(self, token):
-        r'<!--(.*?)-->'
+        r'<!--((.|\s)*?)-->'
         return token
     
     def t_TITLE(self, token):
@@ -70,8 +76,14 @@ class Tokenizer(object):
         return token
     
     def t_NEWLINE(self, token):
-        r'[\n\r]'
+        r'(\n|\r|<br\s?\/?>)'
         return token
+    
+    def t_SUPREMELINKS(self, token):
+        r'<ul\sclass\="supremelinks">(?P<content>(.|\s)*?)<\/ul>'
+        token.value = token.lexer.lexmatch.group('content')
+        return token
+    
 #===============================================================================
 # ERROR HANDLING
 #===============================================================================
