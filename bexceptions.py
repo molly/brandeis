@@ -31,6 +31,8 @@ These are the exceptions used by brandeis:
      +-- IllegalCharacter
     ParserError
      +-- EntityError
+    BotError
+     +-- MissingFootnote
 '''
 
 class ValidatorError(Exception):
@@ -56,6 +58,13 @@ class TokenizerError(Exception):
     
 class ParserError(Exception):
     '''Base exception class for any parser errors.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class BotError(Exception):
+    '''Base exception class for any bot errors.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -106,6 +115,13 @@ class IllegalCharacter(TokenizerError):
     
 class EntityError(ParserError):
     '''The parser encountered an unrecognized HTML entity.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class MissingFootnote(BotError):
+    '''A footnote is missing.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):

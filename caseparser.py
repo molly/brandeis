@@ -127,6 +127,23 @@ class Parser(object):
                 if '/cases/federal/us/' in href:
                     self.value = text
                     return self.value
+                else:
+                    intext = re.match(r'^#F(?P<number>\d+?(\/\d+)?)$', href, re.MULTILINE)
+                    if intext:
+                        self.value = '<ref name="ref{0}"></ref>'.format(intext.group('number'))
+                        return self.value
+                    else:
+                        footnote = re.match(r'^#T(?P<number1>\d+?)(?:\/(?P<number2>\d+))?$', href, re.MULTILINE)
+                        if footnote:
+                            if 'max_footnote' not in self.metadict:
+                                self.metadict['max_footnote'] = dict()
+                            if footnote.group('number2'):
+                                self.metadict['max_footnote'][footnote.group('number1')] = footnote.group('number2')
+                                self.value = 'Footnote {}'.format(footnote.group('number1') + '/' + footnote.group('number2'))
+                            else:
+                                self.metadict['max_footnote']['1'] = int(footnote.group('number1'))
+                                self.value = 'Footnote {}'.format(footnote.group('number1'))
+                            return self.value
         self.value = ''
         return self.value
         

@@ -115,7 +115,7 @@ class Tokenizer(object):
         return token        
     
     def t_LINK(self, token):
-        r'<[aA]\s(?P<info>.*?)>(?P<text>.*?)<\/[aA]>'
+        r'\[?<[aA]\s(?P<info>.*?)>(?P<text>.*?)<\/[aA]>\]?'
         token.value = token.lexer.lexmatch.group('info', 'text')
         return token
         
@@ -155,7 +155,7 @@ class Tokenizer(object):
         return token
     
     def t_SMALLCAPS(self, token):
-        r'((?:[A-Z]+\s?)+|[A-Z]+,\s[A-Z]\.)+(?=[\W])'
+        r'((?:[A-Z]{2,}\.?\s?)+|[A-Z]+,\s[A-Z]\.)+(?=[\W])'
         return token
     
     def t_WHITESPACE(self, token):

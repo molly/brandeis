@@ -129,7 +129,7 @@ for file in files:
     with open(out_filename, 'w', encoding='utf-8') as output_file:
         parser.parse(token_stream, output_file)
     postprocessor.process()
-    
+     
     try:
         os.mkdir('botfiles')
     except OSError:
@@ -137,4 +137,4 @@ for file in files:
     bot_filename = out_filename.replace('wikitext', 'botfiles')
     bot = Bot(out_filename, bot_filename, metadict)
     bot.prepare()
-        
+         
