@@ -155,7 +155,7 @@ class Tokenizer(object):
         return token
     
     def t_SMALLCAPS(self, token):
-        r'([A-Z]{2,}[\-,]?\s?)+(?=[\W])'
+        r'((?:[A-Z]+\s?)+|[A-Z]+,\s[A-Z]\.)+(?=[\W])'
         return token
     
     def t_WHITESPACE(self, token):
