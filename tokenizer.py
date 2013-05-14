@@ -44,6 +44,7 @@ class Tokenizer(object):
               'BOLD',               # <b>
               'B_NEWLINE',          # Newline in blockquote state
               'NEWLINE',            # Newline
+              'SECTION',            # Beginning of a section
               'SMALLCAPS',          # ALL CAPS WORDS
               'WORD',
               'NUMBER',
@@ -152,6 +153,10 @@ class Tokenizer(object):
     
     def t_NEWLINE(self, token):
         r'(\n|\r|<[Bb][Rr]\s?\/?>)'
+        return token
+    
+    def t_SECTION(self, token):
+        r'(Syllabus|SYLLABUS|PER\sCURIAM|Per\sCuriam)'
         return token
     
     def t_SMALLCAPS(self, token):

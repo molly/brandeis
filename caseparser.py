@@ -169,14 +169,7 @@ class Parser(object):
         return self.value
     
     def supremelinks(self, value=None):
-        # List of sections. Shouldn't be added to text, but should be preserved in metadict.
-        self.metadict['sections'] = []
-        content = value if value else self.value
-        content = re.sub(r'\s', '', content)
-        strings = re.findall(r'(?<=>)(.*?)(?=<)', content)
-        for string in strings:
-            if len(string) > 0:
-                self.metadict['sections'].append(string)
+        # List of sections. Shouldn't be added to text.
         self.value = ''
         return self.value
     

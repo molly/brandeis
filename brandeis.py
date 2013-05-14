@@ -128,5 +128,4 @@ for file in files:
     with open(out_filename, 'w', encoding='utf-8') as output_file:
         parser.parse(token_stream, output_file)
     postprocessor.process()
-    print(metadict['sections'])
         
