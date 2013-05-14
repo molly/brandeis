@@ -234,7 +234,7 @@ def strip_extraneous(content):
     match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)',
                       content, flags = re.DOTALL)
     if (match):
-        return match.group('content') + match.group('source')
+        return (match.group('content') + match.group('source')).replace('\n', '').replace('\t', '')
     else:
         return None
     

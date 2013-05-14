@@ -77,11 +77,11 @@ class Tokenizer(object):
 # TOKEN DEFINITIONS
 #===============================================================================
     def t_IGNORED_TAG_CONTENT(self, token):
-        r'<(script|SCRIPT|div\sclass\="disclaimer")(.*?)>(.|\s)*?<\/(div|script|SCRIPT)>'
+        r'<(script|SCRIPT|div\sclass\="disclaimer")(.*?)>.*?<\/(div|script|SCRIPT)>'
         return token
         
     def t_IGNORED_TAG(self, token):
-        r'<\/?(?P<tag>div|DIV|span|SPAN|hr|HR)((.|\s)*?)>'
+        r'<\/?(?P<tag>div|DIV|span|SPAN|hr|HR)(.*?)>'
         token.value = token.lexer.lexmatch.group('tag')
         return token
     
@@ -90,7 +90,7 @@ class Tokenizer(object):
         return token
     
     def t_SOURCE(self, token):
-        r'Source\:\s(?P<source>http.*?\.html)(.|\s)*'
+        r'Source\:\s(?P<source>http.*?\.html).*'
         token.value = token.lexer.lexmatch.group('source')
         return token
     
@@ -120,7 +120,7 @@ class Tokenizer(object):
         return token
         
     def t_COMMENT(self, token):
-        r'<!--((.|\s)*?)-->'
+        r'<!--(.*?)-->'
         return token
     
     def t_HEADER(self, token):
@@ -134,12 +134,12 @@ class Tokenizer(object):
         return token
     
     def t_SUPREMELINKS(self, token):
-        r'<(ul|UL)\s(class|CLASS)\="supremelinks">(?P<content>(.|\s)*?)<\/(ul|UL)>'
+        r'<(ul|UL)\s(class|CLASS)\="supremelinks">(?P<content>.*?)<\/(ul|UL)>'
         token.value = token.lexer.lexmatch.group('content')
         return token
     
     def t_ITALICS(self, token):
-        r'<\/?[Ii]>'
+        r'<\/?([Ii]|em|EM)>'
         return token
     
     def t_BOLD(self, token):
@@ -147,11 +147,11 @@ class Tokenizer(object):
         return token
     
     def t_blockquote_B_NEWLINE(self, token):
-        r'(\n|\r|<[Bb][Rr]\s?\/?>)'
+        r'(<[Bb][Rr]\s?\/?>)'
         return token
     
     def t_NEWLINE(self, token):
-        r'(\n|\r|<[Bb][Rr]\s?\/?>)'
+        r'(<[Bb][Rr]\s?\/?>)'
         return token
     
     def t_SMALLCAPS(self, token):

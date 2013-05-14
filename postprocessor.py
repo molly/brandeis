@@ -36,7 +36,8 @@ class Postprocessor(object):
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
         content = content.strip(' \t\n\r\f\v')
-        content = content.replace('\n|\n', '').replace('\n:\n', '\n')
+        content = re.sub(r'\n\s*\|\s*\n', '\n\n', content)
+        content = content.replace('\n:\n', '\n')
         content = re.sub('\n(\s)*\n', '\n\n', content)
         content = content.replace('\n ', '\n')
         content = re.sub('(?<!\n)\n(?!\n)', '\n\n', content)
