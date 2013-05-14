@@ -71,6 +71,12 @@ class Parser(object):
         self.value = ''
         return self.value
     
+    def source(self, value=None):
+        # Keep in metadict.
+        self.metadict['source'] = value if value else self.value
+        self.value = ''
+        return self.value
+    
     def paragraph(self, value=None):
         # Insert line break if end of paragraph. Ignore otherwise.
         # TODO: Handle other formatting.
@@ -90,6 +96,9 @@ class Parser(object):
             link_class = m_class.group('class')
             if link_class == 'page-name':
                 self.value = '\nPAGE ' + text + '\n'
+                return self.value
+            elif link_class == 'page-number':
+                self.value = text + '\n'
                 return self.value
         else:
             m_href = re.search(r'href\="(?P<href>.*?)"', info)
@@ -151,6 +160,11 @@ class Parser(object):
         self.value = ''
         return self.value
     
+    def consecutive(self, value=None):
+        # Strips consecutive italics (</i><i>) that occasionally appear
+        self.value = ''
+        return self.value
+    
     def italics(self, value=None):
         # Wraps text in double quotes.
         self.value = "''"
@@ -176,9 +190,20 @@ class Parser(object):
             self.value = value
         return self.value
     
+    def multi_apostrophes(self, value=None):
+        # If multiple apostrophes appear in the text (as they do, occasionally, due to bad OCR), 
+        # escape them with <nowiki></nowiki> to avoid borking the italics/bold
+        if value:
+            self.value = value
+        self.value = "<nowiki>" + self.value + "</nowiki>"
+        return self.value
+        
     def punctuation(self, value=None):
         if value:
             self.value = value
+        if self.value == "'":
+            # Replace apostrophes with ¤ for now to reduce conflicts with italics/bold
+            self.value = "¤"
         return self.value
     
 def strip_extraneous(content):

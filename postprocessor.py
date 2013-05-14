@@ -26,7 +26,10 @@ class Postprocessor(object):
         
     def process(self):
         self.clean_spaces()
-        self.multiline()
+        self.multiline_bold()
+        self.multiline_italic()
+        self.fix_apostrophes()
+        self.clean_spaces() #Once more for good measure.
     
     def clean_spaces(self):
         '''Make sure any line break consists of two spaces, avoid lines with just spaces on them.'''
@@ -40,22 +43,54 @@ class Postprocessor(object):
         with open(self.filename, 'w', encoding='utf-8') as output:
             output.write(content)
             
-    def multiline(self):
-        '''Deal with line breaks within italic or bold text.'''
+    def fix_apostrophes(self):
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
-        content = re.split(r"('''(?:.|\n)*?''')", content)
+        content = content.replace('¤', "'")
+        with open(self.filename, 'w', encoding='utf-8') as output:
+            output.write(content)
+            
+    def multiline_bold(self):
+        '''Deal with line breaks within bold text.'''
+        with open(self.filename, 'r', encoding='utf-8') as output:
+            content = output.read()
+        content = re.split(r"'''((?:.|\n)*?)'''", content)
         new = ''
         for i in range(len(content)):
             if ( i%2 ):
-                match = re.search(r'[^ \s\']', content[i])
-                leading = content[i][:match.start()].count('\n')
-                if leading >=2:
-                    new += "\n\n'''"
-                content[i] = content[i][match.start():]
-                content[i] = re.sub(r'(?<=[^\n])\n', "'''\n", content[i])
-                content[i] = re.sub(r'\n(?=[\S])', "\n'''", content[i])
+                if '\n' in content[i]:
+                    lines = content[i].split('\n')
+                    print(lines)
+                    for line in lines:
+                        if line == '' or line == ' ':
+                            new += '\n'
+                        else:
+                            new += "'''" + line + "'''"
+                else:
+                    new += content[i]
+            else:
                 new += content[i]
+        with open(self.filename, 'w', encoding='utf-8') as output:
+            output.write(new)
+            
+    def multiline_italic(self):
+        '''Deal with line breaks within bold text.'''
+        with open(self.filename, 'r', encoding='utf-8') as output:
+            content = output.read()
+        content = re.split(r"((?<!')''[^'](?:.|\n)*?[^']''(?!'))", content)
+        new = ''
+        for i in range(len(content)):
+            if ( i%2 ):
+                if '\n' in content[i]:
+                    lines = content[i].split('\n')
+                    print(lines)
+                    for line in lines:
+                        if line == '' or line == ' ':
+                            new += '\n'
+                        else:
+                            new += "''" + line + "''"
+                else:
+                    new += content[i]
             else:
                 new += content[i]
         with open(self.filename, 'w', encoding='utf-8') as output:

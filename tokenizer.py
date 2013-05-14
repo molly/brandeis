@@ -27,6 +27,7 @@ class Tokenizer(object):
     tokens = (
               'IGNORED_TAG_CONTENT',# For tags where we want to ignore the tags AND the content
               'IGNORED_TAG',        # Various tags we don't need to keep (content is preserved)
+              'SOURCE',             # Source link and text added by lochner
               'PARAGRAPH',          # <p>, </p>
               'LINK',               # <a> tags
               'COMMENT',            # <!-- comment -->
@@ -34,11 +35,13 @@ class Tokenizer(object):
               'HTML_ENTITY',        # &thing;
               'WHITESPACE',         # Tabs, spaces
               'SUPREMELINKS',       # <ul class="supremelinks">
+              'CONSECUTIVE',        # <i></i>
               'ITALICS',            # <i>
               'BOLD',               # <b>
               'NEWLINE',            # Newline
               'WORD',
               'NUMBER',
+              'MULTI_APOSTROPHES',  # For '', ''' in the text
               'PUNCTUATION',
               )
     
@@ -61,12 +64,21 @@ class Tokenizer(object):
 # TOKEN DEFINITIONS
 #===============================================================================
     def t_IGNORED_TAG_CONTENT(self, token):
-        r'<(script|SCRIPT)(.*?)>(.|\s)*?<\/(script|SCRIPT)>'
+        r'<(script|SCRIPT|div\sclass\="disclaimer")(.*?)>(.|\s)*?<\/(div|script|SCRIPT)>'
         return token
-    
+        
     def t_IGNORED_TAG(self, token):
         r'<\/?(?P<tag>div|DIV|span|SPAN|hr|HR)((.|\s)*?)>'
         token.value = token.lexer.lexmatch.group('tag')
+        return token
+    
+    def t_CONSECUTIVE(self, token):
+        r'<\/i><i>'
+        return token
+    
+    def t_SOURCE(self, token):
+        r'Source\:\s(?P<source>http.*?\.html)(.|\s)*'
+        token.value = token.lexer.lexmatch.group('source')
         return token
     
     def t_PARAGRAPH(self, token):
@@ -120,6 +132,10 @@ class Tokenizer(object):
     
     def t_NUMBER(self, token):
         r'[0-9]+'
+        return token
+    
+    def t_MULTI_APOSTROPHES(self, token):
+        r"'{2,3}"
         return token
     
     def t_PUNCTUATION(self, token):
