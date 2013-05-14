@@ -29,6 +29,9 @@ class Tokenizer(object):
               'IGNORED_TAG_CONTENT',# For tags where we want to ignore the tags AND the content
               'IGNORED_TAG',        # Various tags we don't need to keep (content is preserved)
               'SOURCE',             # Source link and text added by lochner
+              'BLOCKQUOTE',         # <blockquote>
+              'E_BLOCKQUOTE',       # </blockquote>
+              'B_PARAGRAPH',        # <p> in blockquote state
               'PARAGRAPH',          # <p>, </p>
               'LINK',               # <a> tags
               'COMMENT',            # <!-- comment -->
@@ -39,12 +42,21 @@ class Tokenizer(object):
               'CONSECUTIVE',        # <i></i>
               'ITALICS',            # <i>
               'BOLD',               # <b>
+              'B_NEWLINE',          # Newline in blockquote state
               'NEWLINE',            # Newline
+              'SMALLCAPS',          # ALL CAPS WORDS
               'WORD',
               'NUMBER',
               'MULTI_APOSTROPHES',  # For '', ''' in the text
               'PUNCTUATION',
               )
+
+#===================================================================================================
+# STATES
+#===================================================================================================
+    states = (
+              ('blockquote', 'inclusive'),
+             )
     
     def __init__(self, mdict):
         '''Initiate logging, open a file to store tokens, build the lexer.'''
@@ -82,6 +94,21 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('source')
         return token
     
+    def t_BLOCKQUOTE(self, token):
+        r'<blockquote>'
+        token.lexer.begin('blockquote') # Begin blockquote state
+        return token
+    
+    def t_blockquote_E_BLOCKQUOTE(self, token):
+        r'<\/blockquote>'
+        token.lexer.begin('INITIAL') # End blockquote state
+        return token
+    
+    def t_blockquote_B_PARAGRAPH(self, token):
+        r'<(?P<end>\/?)[Pp](?P<info>.*?)>'
+        token.value = token.lexer.lexmatch.group('end', 'info')
+        return token
+    
     def t_PARAGRAPH(self, token):
         r'<(?P<end>\/?)[Pp](?P<info>.*?)>'
         token.value = token.lexer.lexmatch.group('end', 'info')
@@ -106,10 +133,6 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('entity')
         return token
     
-    def t_WHITESPACE(self, token):
-        r'[ \t]'
-        return token
-    
     def t_SUPREMELINKS(self, token):
         r'<(ul|UL)\s(class|CLASS)\="supremelinks">(?P<content>(.|\s)*?)<\/(ul|UL)>'
         token.value = token.lexer.lexmatch.group('content')
@@ -123,8 +146,20 @@ class Tokenizer(object):
         r'<\/?(B|b|strong|STRONG)>'
         return token
     
+    def t_blockquote_B_NEWLINE(self, token):
+        r'(\n|\r|<[Bb][Rr]\s?\/?>)'
+        return token
+    
     def t_NEWLINE(self, token):
         r'(\n|\r|<[Bb][Rr]\s?\/?>)'
+        return token
+    
+    def t_SMALLCAPS(self, token):
+        r'([A-Z]{2,}\s?)+(?=[\W])'
+        return token
+    
+    def t_WHITESPACE(self, token):
+        r'[ \t]'
         return token
     
     def t_WORD(self, token):

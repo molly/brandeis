@@ -36,7 +36,7 @@ class Postprocessor(object):
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
         content = content.strip(' \t\n\r\f\v')
-        content = content.replace('\n|\n', '')
+        content = content.replace('\n|\n', '').replace('\n:\n', '\n')
         content = re.sub('\n(\s)*\n', '\n\n', content)
         content = content.replace('\n ', '\n')
         content = re.sub('(?<!\n)\n(?!\n)', '\n\n', content)
@@ -54,22 +54,25 @@ class Postprocessor(object):
         '''Deal with line breaks within bold text.'''
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
-        content = re.split(r"'''((?:.|\n)*?)'''", content)
+        content = re.split(r"(?<!<nowiki>)'''((?:.|\n)*?)'''(?!<\/nowiki>)", content)
         new = ''
         for i in range(len(content)):
-            if ( i%2 ):
-                if '\n' in content[i]:
-                    lines = content[i].split('\n')
-                    print(lines)
-                    for line in lines:
-                        if line == '' or line == ' ':
-                            new += '\n'
-                        else:
-                            new += "'''" + line + "'''"
+            if content[i]:
+                if ( i%2 ):
+                    if '\n' in content[i]:
+                        lines = content[i].split('\n')
+                        for line in lines:
+                            if line == '' or line == ' ':
+                                new += '\n'
+                            else:
+                                new += "'''" + line + "'''"
+                    else:
+                        if content[i][-4] == " ":
+                            # Move spaces before ending apostrophes outside ('''foo ''' -> '''foo''' )
+                            content[i] = content[i][:-4] + "''' "
+                        new += content[i]
                 else:
                     new += content[i]
-            else:
-                new += content[i]
         with open(self.filename, 'w', encoding='utf-8') as output:
             output.write(new)
             
@@ -77,21 +80,24 @@ class Postprocessor(object):
         '''Deal with line breaks within bold text.'''
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
-        content = re.split(r"((?<!')''[^'](?:.|\n)*?[^']''(?!'))", content)
+        content = re.split(r"((?<!('|>))''[^'](?:.|\n)*?[^']''(?!('|<)))", content)
         new = ''
         for i in range(len(content)):
-            if ( i%2 ):
-                if '\n' in content[i]:
-                    lines = content[i].split('\n')
-                    print(lines)
-                    for line in lines:
-                        if line == '' or line == ' ':
-                            new += '\n'
-                        else:
-                            new += "''" + line + "''"
+            if content[i]:
+                if ( i%2 ):
+                    if '\n' in content[i]:
+                        lines = content[i].split('\n')
+                        for line in lines:
+                            if line == '' or line == ' ':
+                                new += '\n'
+                            else:
+                                new += "''" + line + "''"
+                    else:
+                        if content[i][-3] == " ":
+                            # Move spaces before ending apostrophes outside (''foo '' -> ''foo'' )
+                            content[i] = content[i][:-3] + "'' "
+                        new += content[i]
                 else:
                     new += content[i]
-            else:
-                new += content[i]
         with open(self.filename, 'w', encoding='utf-8') as output:
             output.write(new)

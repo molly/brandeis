@@ -77,6 +77,21 @@ class Parser(object):
         self.value = ''
         return self.value
     
+    def blockquote(self, value=None):
+        self.value = "\n:"
+        return self.value
+    
+    def e_blockquote(self, value=None):
+        self.value = '\n'
+        return self.value
+    
+    def b_paragraph(self, value=None):
+        if self.value[0] == '':
+            self.value = '\n\n:'
+        else:
+            self.value = ''
+        return self.value
+    
     def paragraph(self, value=None):
         # Insert line break if end of paragraph. Ignore otherwise.
         # TODO: Handle other formatting.
@@ -100,6 +115,11 @@ class Parser(object):
             elif link_class == 'page-number':
                 self.value = text + '\n'
                 return self.value
+            elif link_class == 'pdflink':
+                # Hold on to PDF link in case we want it later.
+                m_href = re.search(r'href\="(?P<href>.*?)"', info)
+                href = m_href.group('href')
+                self.metadict['pdf'] = href
         else:
             m_href = re.search(r'href\="(?P<href>.*?)"', info)
             if m_href:
@@ -175,9 +195,20 @@ class Parser(object):
         self.value = "'''"
         return self.value
     
+    def smallcaps(self, value=None):
+        if value:
+            self.value = value
+        self.value = "{{sc|" + self.value.title() + "}}"
+        return self.value
+    
     def word(self, value=None):
         if value:
             self.value = value
+        return self.value
+    
+    def b_newline(self, value=None):
+        # Newlines should be preserved. Extraneous ones will be removed in post-processing.
+        self.value = '\n:'
         return self.value
     
     def newline(self, value=None):

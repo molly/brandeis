@@ -60,5 +60,9 @@ class TestParser(unittest.TestCase):
         content = 'foo'
         self.assertRaises(EntityError, self.parser.html_entity, content)
         
+    def testSmallCaps(self):
+        content = "FOO"
+        self.assertEqual(self.parser.smallcaps(content), "{{sc|Foo}}",
+                         "Incorrect value returned from small caps parser.")
 if __name__ == '__main__':
     unittest.main()
