@@ -118,7 +118,13 @@ for file in files:
     
     with open(file, 'r', encoding='utf-8') as input_file:
         raw_text = input_file.read()
-        token_stream = tokenizer.analyze(raw_text)
+        try:
+            token_stream = tokenizer.analyze(raw_text)
+        except IllegalCharacter as e:
+            logger.error("Illegal character encountered: \"{0}\" at {1}. More: {2}"
+                              .format(raw_text[e.value], e.value,
+                                     (raw_text[e.value:e.value+20] + "...").replace('\n', '\\n')))
+            sys.exit()
     with open(out_filename, 'w', encoding='utf-8') as output_file:
         parser.parse(token_stream, output_file)
     postprocessor.process()

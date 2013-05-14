@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging, re
+import logging, re, sys
 import ply.lex as lex
+from bexceptions import IllegalCharacter
 
 class Tokenizer(object):
 #===================================================================================================
@@ -147,8 +148,7 @@ class Tokenizer(object):
 #===============================================================================
     def t_ANY_error(self, token):
         token.lexer.skip(1)
-#        self.logger.info("Illegal character {} at line {}, position {}."
-#                         .format(token.value[0], token.lineno, token.lexpos))
+        raise IllegalCharacter(token.lexpos)
         
     def analyze(self, data):
         '''Read through the text file and tokenize.'''

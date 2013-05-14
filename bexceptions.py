@@ -27,6 +27,8 @@ These are the exceptions used by brandeis:
      +-- NoCaseInList
      +-- PageNotFound
      +-- MultipleCases
+    TokenizerError
+     +-- IllegalCharacter
     ParserError
      +-- EntityError
 '''
@@ -40,6 +42,13 @@ class ValidatorError(Exception):
     
 class APIError(Exception):
     '''Base exception class for any Wikisource API errors.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class TokenizerError(Exception):
+    '''Base exception class for any tokenizer errors.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -83,6 +92,13 @@ class PageNotFound(APIError):
     
 class MultipleCases(APIError):
     '''The case was found multiple times in the list.'''
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+    
+class IllegalCharacter(TokenizerError):
+    '''The tokenizer encountered an illegal character.'''
     def __init__(self, value):
         self.value = value
     def __str__(self):
