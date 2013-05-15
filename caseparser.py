@@ -113,7 +113,8 @@ class Parser(object):
                 self.value = '\nPAGE ' + text + '\n'
                 return self.value
             elif link_class == 'page-number':
-                self.value = text + '\n'
+                num_m = re.search(r'name\="(?P<name>\d+)"', info)
+                self.value = '\nPAGE ' + num_m.group('name') + '\n'
                 return self.value
             elif link_class == 'pdflink':
                 # Hold on to PDF link in case we want it later.
@@ -124,7 +125,7 @@ class Parser(object):
             m_href = re.search(r'href\="(?P<href>.*?)"', info)
             if m_href:
                 href = m_href.group('href')
-                if '/cases/federal/us/' in href:
+                if 'cases/federal/us' in href:
                     self.value = text
                     return self.value
                 else:

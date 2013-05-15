@@ -33,6 +33,7 @@ class BotParser(object):
     def footnotes(self):
         if 'max_footnote' in self.metadict:
             max_footnote = self.metadict['max_footnote']
+            print(max_footnote)
             for sect in range(1, len(max_footnote)+1):
                 with open(self.output, 'r', encoding='utf-8') as inputfile:
                     content = inputfile.read()
@@ -49,7 +50,7 @@ class BotParser(object):
                 while ind < len(footnotes) and foot_no <= int(max_footnote[str(sect)]):
                     if footnotes[ind] == 'Footnote ' + section + str(foot_no):
                         ind += 1
-                        if foot_no == max_footnote:
+                        if foot_no == max_footnote[str(sect)]:
                             foot_text += footnotes[ind]
                             ind += 1
                         else:
@@ -70,12 +71,20 @@ class BotParser(object):
                     split = []
                     current_footnote = '<ref name="ref{}">'.format(section + str(i))
                     x = text.find(current_footnote)
+                    if x == -1:
+                        continue
                     split.append(text[:x+len(current_footnote)])
                     split.append(text[x+len(current_footnote):])
+                    footnote_texts[i-1] = ' ' if footnote_texts[i-1] == '' else footnote_texts[i-1]
                     text = split[0] + footnote_texts[i-1] + split[1]
               
                 with open(self.output, 'w', encoding='utf-8') as output:
                     output.write(text + trailing)
+                    
+            with open(self.output, 'a', encoding='utf-8') as output:
+                output.write('{{smallrefs}}\n')
+                
+            
                     
     def pages(self):
         '''Replace page numbers with {{page break}} template, join any hyphenated words.'''
@@ -119,7 +128,7 @@ class BotParser(object):
                             justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
                             justice = justices.group('justice')
                             if not justice in self.metadict['sections']['concurrence_justices']:
-                                output.write('CONCURRENCE' + '-'*80 + '\n')
+                                output.write('CONCURRENCE' + '-'*80 + '\n\n')
                                 self.metadict['sections']['concurrence_justices'].append(justice)
                                 self.metadict['sections']['concurrence'].append(i)
                     elif re.search(r',\sdissenting(\.|\Z)', paras[i], re.IGNORECASE):
@@ -130,19 +139,18 @@ class BotParser(object):
                             justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
                             justice = justices.group('justice')
                             if not justice in self.metadict['sections']['dissent_justices']:
-                                output.write('DISSENT' + '-'*80 + '\n')
+                                output.write('DISSENT' + '-'*80 + '\n\n')
                                 self.metadict['sections']['dissent_justices'].append(justice)
                                 self.metadict['sections']['dissent'].append(i)
                     elif 'per curiam' in paras[i].lower():
                         if 'per curiam' not in self.metadict['sections']:
-                            output.write('PER CURIAM' + '-'*80 + '\n')
+                            output.write('PER CURIAM' + '-'*80 + '\n\n')
                             self.metadict['sections']['per curiam'] = i
                     elif 'delivered the opinion' in paras[i].lower():
                         if 'opinion' not in self.metadict['sections']:
-                            output.write('OPINION' + '-'*80 + '\n')
+                            output.write('OPINION' + '-'*80 + '\n\n')
                             self.metadict['sections']['opinion'] = i
                     output.write(paras[i])
                 else:
                     output.write(paras[i])
                 output.write("\n\n")
-        print(self.metadict['sections'])
