@@ -27,7 +27,7 @@ class Bot(object):
         self.parser = BotParser(self.inputfile, self.output, self.metadict)
         
     def prepare(self):
-        # Prepare file so the bot can upload it
+        '''Prepare file so the bot can upload it.'''
         self.parser.sectionize()
         self.parser.footnotes()
         self.parser.pages()

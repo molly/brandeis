@@ -62,17 +62,17 @@ class Parser(object):
 # PARSING FUNCTIONS
 #===================================================================================================
     def ignored_tag_content(self, value=None):
-        # Don't want these tags or their content in the output.
+        '''Don't want these tags or their content in the output.'''
         self.value = ''
         return self.value
     
     def ignored_tag(self, value=None):
-        # Don't want these tags in the output.
+        ''''Don't want these tags in the output, but the content is preserved.'''
         self.value = ''
         return self.value
     
     def source(self, value=None):
-        # Keep in metadict.
+        '''Keep in metadict, remove from output.'''
         self.metadict['source'] = value if value else self.value
         self.value = ''
         return self.value
@@ -86,6 +86,7 @@ class Parser(object):
         return self.value
     
     def b_paragraph(self, value=None):
+        '''New paragraph within a blockquote; needs its own colon to continue the indentation.'''
         if self.value[0] == '':
             self.value = '\n\n:'
         else:
@@ -93,8 +94,8 @@ class Parser(object):
         return self.value
     
     def paragraph(self, value=None):
-        # Insert line break if end of paragraph. Ignore otherwise.
-        # TODO: Handle other formatting.
+        '''Insert line break if end of paragraph. Ignore otherwise.'''
+        #TODO: Handle other formatting
         if self.value[0] == '':
             self.value = '\n\n'
         else:
@@ -102,7 +103,7 @@ class Parser(object):
         return self.value
         
     def link(self, value=None):
-        # Extract necessary information to determine if they should be kept
+        '''Extract necessary information from the link's HTML to determine if it should be kept'''
         value = value if value else self.value
         info = value[0]
         text = value[1]
@@ -129,6 +130,7 @@ class Parser(object):
                     self.value = text
                     return self.value
                 else:
+                    # Footnotes
                     intext = re.match(r'^#F(?P<number>\d+?(\/\d+)?)$', href, re.MULTILINE)
                     if intext:
                         self.value = '<ref name="ref{0}"></ref>'.format(intext.group('number'))
@@ -149,12 +151,12 @@ class Parser(object):
         return self.value
         
     def comment(self, value=None):
-        # Don't want comments in the output.
+        '''Don't want HTML comments in the output.'''
         self.value = ''
         return self.value
     
     def header(self, value=None):
-        # This will be added from the metadict
+        '''Larger text produced by <h#> tags'''
         value = value if value else self.value
         level = value[0]
         content = value[1]
@@ -182,33 +184,37 @@ class Parser(object):
         return self.value
     
     def whitespace(self, value=None):
-        # Use spaces instead of tabs.
         self.value = ' '
         return self.value
     
     def supremelinks(self, value=None):
-        # List of sections. Shouldn't be added to text.
+        '''List of sections. Shouldn't be added to text, not particularly useful to preserve.'''
         self.value = ''
         return self.value
     
     def consecutive(self, value=None):
-        # Strips consecutive italics (</i><i>) that occasionally appear
+        '''Strips consecutive italics (</i><i>) that occasionally appear'''
         self.value = ''
         return self.value
     
     def italics(self, value=None):
-        # Wraps text in double quotes.
+        '''Wraps text in double apostrophes.'''
         self.value = "''"
         return self.value
     
     def bold(self, value=None):
-        # Wraps text in triple quotes.
+        '''Wraps text in triple apostrophes.'''
         self.value = "'''"
         return self.value
     
     def smallcaps(self, value=None):
         if value:
             self.value = value
+        # Avoid making roman numerals into small caps
+        roman = {'I', 'V', 'X', 'L', 'C', 'D', 'M', '.'}
+        if len(self.value) <= 5:
+            if set(self.value) <= roman:
+                return self.value
         self.value = "{{sc|" + self.value.title() + "}}"
         return self.value
     
@@ -218,12 +224,12 @@ class Parser(object):
         return self.value
     
     def b_newline(self, value=None):
-        # Newlines should be preserved. Extraneous ones will be removed in post-processing.
+        '''Newlines within blockquotes need a colon to continue the indentation.'''
         self.value = '\n:'
         return self.value
     
     def newline(self, value=None):
-        # Newlines should be preserved. Extraneous ones will be removed in post-processing.
+        '''Newlines should be preserved. Extraneous ones will be removed in post-processing.'''
         self.value = '\n'
         return self.value
     
@@ -233,8 +239,8 @@ class Parser(object):
         return self.value
     
     def multi_apostrophes(self, value=None):
-        # If multiple apostrophes appear in the text (as they do, occasionally, due to bad OCR), 
-        # escape them with <nowiki></nowiki> to avoid borking the italics/bold
+        '''If multiple apostrophes appear in the text (as they do, occasionally, due to bad OCR), 
+        escape them with <nowiki></nowiki> to avoid borking the italics/bold'''
         if value:
             self.value = value
         self.value = "<nowiki>" + self.value + "</nowiki>"
@@ -252,6 +258,8 @@ class Parser(object):
         return self.value
     
 def strip_extraneous(content):
+    '''Much of the HTML in the page is not useful -- this removes most everything but the case
+    itself. Also removes newlines and tab characters.'''
     match = re.search(r'<article\sid\="maincontent">(?P<content>.*?)<\/article>.*?<\/html>(?P<source>.*)',
                       content, flags = re.DOTALL)
     if (match):
@@ -260,7 +268,7 @@ def strip_extraneous(content):
         return None
     
 def get_metadata(metadict, filename):
-    '''Pull the title from the file.'''
+    '''Pull the title and other information from the file.'''
     with open(filename, 'r', encoding='utf-8') as file:
         while True:
             first_line = file.readline()

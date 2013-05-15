@@ -45,12 +45,6 @@ class TestParser(unittest.TestCase):
         token = ('href="http://addthis.com/"', 'Spam')
         self.assertEqual(self.parser.link(token), '',
                           'Parser did not return empty string for a bad link.')
-        
-    def testSupremeLinks(self):
-        token = '<ul class="supremelinks"><li>\n<a href="/cases/federal/us/529/848/">Syllabus</a>\n</li>\n<li>\nCase\n</li>\n</ul>'
-        self.parser.supremelinks(token)
-        if 'Syllabus' not in self.test_dict['sections'] or 'Case' not in self.test_dict['sections']:
-            self.fail('Incorrect or no sections added for supreme links.')
             
     def testGoodEntity(self):
         content = 'quot'

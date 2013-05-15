@@ -148,6 +148,7 @@ class Cache(object):
             pass
 
     def get_cached_volume(self, volume):
+        '''Retrieve an already-cached volume, or None if it does not exist.'''
         try:
             with open('cache/' + volume, 'r', encoding='utf-8') as cache_file:
                 content = cache_file.read()
@@ -156,6 +157,7 @@ class Cache(object):
             return None            
     
     def add_to_volume_cache(self, volume, content):
+        '''Add a volume to the cache.'''
         with open('cache/' + volume, 'w', encoding='utf-8') as cache_file:
             cache_file.write(content)
         return True

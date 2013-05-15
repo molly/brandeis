@@ -129,7 +129,7 @@ class Tokenizer(object):
         return token
     
     def t_HTML_ENTITY(self, token):
-        r'&(?P<entity>[a-z]+);'
+        r'&(?P<entity>[#a-z]+);'
         token.value = token.lexer.lexmatch.group('entity')
         return token
     
@@ -159,7 +159,7 @@ class Tokenizer(object):
         return token
     
     def t_WHITESPACE(self, token):
-        r'[ \t]'
+        r' '
         return token
     
     def t_WORD(self, token):
@@ -199,15 +199,3 @@ class Tokenizer(object):
                 self.token_list.append(l_token)
                 tokenfile.write(str(token) + '\n')
         return self.token_list
-    
-    def ignore_case(self, exp):
-        final = str()
-        for i in range(len(exp)):
-            if exp[i].isalpha():
-                if exp[i].islower():
-                    final += '[' + exp[i] + exp[i].upper() + ']'
-                else:
-                    final += '[' + exp[i] + exp[i].lower() + ']'
-            else:
-                final += exp[i]
-        return final

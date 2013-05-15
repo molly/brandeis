@@ -32,6 +32,8 @@ class BotParser(object):
             outputfile.write(content)
         
     def footnotes(self):
+        '''Parse out footnotes into <ref></ref> tags. It does what it can, but it's highly
+        dependent on the input file. All footnotes should be manually checked.'''
         if 'max_footnote' in self.metadict:
             max_footnote = self.metadict['max_footnote']
             self.logger.warning("Added footnotes to the text. ({0} sections: {1})."
@@ -52,11 +54,17 @@ class BotParser(object):
                 while ind < len(footnotes) and foot_no <= int(max_footnote[str(sect)]):
                     if footnotes[ind] == 'Footnote ' + section + str(foot_no):
                         ind += 1
+                        # Only allow the last footnote to be one line long. This will more likely
+                        # than not clip the final footnote, but there's really no way for the
+                        # parser to know where the last footnote ends and where the main text
+                        # resumes.
                         if foot_no == max_footnote[str(sect)]:
                             foot_text += footnotes[ind]
                             ind += 1
                         else:
-                            while ind < len(footnotes) and footnotes[ind] != 'Footnote ' + section + str(foot_no + 1):
+                            while ind < len(footnotes) and footnotes[ind] != ('Footnote ' +
+                                                                              section +
+                                                                              str(foot_no + 1)):
                                 if foot_text != '':
                                     foot_text += '\n\n'
                                 foot_text += footnotes[ind]
@@ -107,6 +115,8 @@ class BotParser(object):
             output.write(content)
 
     def sectionize(self):
+        '''Attempt to parse out any changes in section. Again, this is highly dependent on the input
+        file and needs to be double-checked.'''
         self.metadict['sections'] = dict()
         self.metadict['sections']['concurrence_justices'] = []
         self.metadict['sections']['dissent_justices'] = []
@@ -156,6 +166,8 @@ class BotParser(object):
                 else:
                     output.write(paras[i])
                 output.write("\n\n")
+                
+        # Create useful warning messages to help the assistant
         self.logger.warning("Sections: ")
         for key in self.metadict['sections']:
             value = self.metadict['sections'][key]

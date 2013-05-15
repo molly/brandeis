@@ -25,6 +25,7 @@ class Postprocessor(object):
         self.filename = file
         
     def process(self):
+        '''Dispatcher method.'''
         self.clean_spaces()
         self.multiline_bold()
         self.multiline_italic()
@@ -45,6 +46,8 @@ class Postprocessor(object):
             output.write(content)
             
     def fix_apostrophes(self):
+        '''Change any literal apostrophes (that were temporarily converted to '¤' characters) back
+        to apostrophes.'''
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
         content = content.replace('¤', "'")
@@ -78,7 +81,7 @@ class Postprocessor(object):
             output.write(new)
             
     def multiline_italic(self):
-        '''Deal with line breaks within bold text.'''
+        '''Deal with line breaks within italic text.'''
         with open(self.filename, 'r', encoding='utf-8') as output:
             content = output.read()
         content = re.split(r"((?<!('|>))''[^'](?:.|\n)*?[^']''(?!('|<)))", content)

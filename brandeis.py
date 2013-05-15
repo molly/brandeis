@@ -130,6 +130,7 @@ for file in files:
         parser.parse(token_stream, output_file)
     postprocessor.process()
      
+    # Begin the bot parsing
     try:
         os.mkdir('botfiles')
     except OSError:
