@@ -18,13 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from bexceptions import MissingFootnote
-import re
+import logging, re
 
 class BotParser(object):
     
     def __init__(self, inputfile, output, metadict):
         self.output = output
         self.metadict = metadict
+        self.logger = logging.getLogger('brandeis')
         with open(inputfile, 'r', encoding='utf-8') as in_file:
             content = in_file.read()
         with open(self.output, 'w', encoding='utf-8') as outputfile:
@@ -33,7 +34,8 @@ class BotParser(object):
     def footnotes(self):
         if 'max_footnote' in self.metadict:
             max_footnote = self.metadict['max_footnote']
-            print(max_footnote)
+            self.logger.warning("Added footnotes to the text. ({0} sections: {1})."
+                                .format(len(max_footnote), str(max_footnote)))
             for sect in range(1, len(max_footnote)+1):
                 with open(self.output, 'r', encoding='utf-8') as inputfile:
                     content = inputfile.read()
@@ -72,6 +74,8 @@ class BotParser(object):
                     current_footnote = '<ref name="ref{}">'.format(section + str(i))
                     x = text.find(current_footnote)
                     if x == -1:
+                        self.logger.warning("Unable to find an in-text tag for footnote #" +
+                                            section + str(i) + ". It has been omitted.")
                         continue
                     split.append(text[:x+len(current_footnote)])
                     split.append(text[x+len(current_footnote):])
@@ -83,8 +87,6 @@ class BotParser(object):
                     
             with open(self.output, 'a', encoding='utf-8') as output:
                 output.write('{{smallrefs}}\n')
-                
-            
                     
     def pages(self):
         '''Replace page numbers with {{page break}} template, join any hyphenated words.'''
@@ -154,3 +156,14 @@ class BotParser(object):
                 else:
                     output.write(paras[i])
                 output.write("\n\n")
+        self.logger.warning("Sections: ")
+        for key in self.metadict['sections']:
+            value = self.metadict['sections'][key]
+            if 'justices' in key and len(value) is not 0:
+                self.logger.warning("\t" + key + ": " + ', '.join(value))
+            elif type(value) is int:
+                self.logger.warning("\t" + key + ": 1")
+            elif type(value) is list and len(value) is not 0:
+                self.logger.warning("\t" + key + ": " + str(len(value)))
+            else:
+                self.logger.warning("\tNo " + key + ".")

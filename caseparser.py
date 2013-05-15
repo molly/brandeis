@@ -246,6 +246,9 @@ class Parser(object):
         if self.value == "'":
             # Replace apostrophes with ¤ for now to reduce conflicts with italics/bold
             self.value = "¤"
+        elif self.value == "*":
+            # Prevent bullet points
+            self.value = "<nowiki>*</nowiki>"
         return self.value
     
 def strip_extraneous(content):
