@@ -31,6 +31,7 @@ class Tokenizer(object):
               'SOURCE',             # Source link and text added by lochner
               'BLOCKQUOTE',         # <blockquote>
               'E_BLOCKQUOTE',       # </blockquote>
+              'SECTION',            # Repeated section name
               'B_PARAGRAPH',        # <p> in blockquote state
               'PARAGRAPH',          # <p>, </p>
               'LINK',               # <a> tags
@@ -45,9 +46,11 @@ class Tokenizer(object):
               'B_NEWLINE',          # Newline in blockquote state
               'NEWLINE',            # Newline
               'SMALLCAPS',          # ALL CAPS WORDS
+              'ORDERED',            # "It is so ordered."
               'WORD',
               'NUMBER',
               'MULTI_APOSTROPHES',  # For '', ''' in the text
+              'ASTERISKS',          # ***
               'PUNCTUATION',
               )
 
@@ -62,15 +65,6 @@ class Tokenizer(object):
         '''Initiate logging, open a file to store tokens, build the lexer.'''
         self.logger = logging.getLogger('brandeis')
         self.metadict = mdict
-        
-        # Reusable data
-        self.months = r'(?:[Jj](?:anuary|ANUARY)|[Ff](?:ebruary|EBRUARY)|[Mm](?:ARCH|arch)|[Aa](?:pril|PRIL)|[Mm](?:ay|AY)|[Jj](?:une|UNE)|[Jj](?:uly|ULY)|[Aa](?:ugust|UGUST)|[Ss](?:eptember|EPTEMBER)|[Oo](?:ctober|CTOBER)|[Nn](?:ovember|OVEMBER)|[Dd](?:ecember|ECEMBER))'
-    
-        
-        # Define any regexes that rely on external data
-        title_no_case = self.ignore_case(re.escape(self.metadict['title']))
-        
-        # Create lexer
         self.lexer = lex.lex(module=self)
         
 #===============================================================================
@@ -102,6 +96,15 @@ class Tokenizer(object):
     def t_blockquote_E_BLOCKQUOTE(self, token):
         r'<\/blockquote>'
         token.lexer.begin('INITIAL') # End blockquote state
+        return token
+    
+    def t_SECTION(self, token):
+        r'(?<=<\/A><\/p><p>)(?P<name>Per\sCuriam)(?=<\/p>)'
+        token.value = token.lexer.lexmatch.group('name')
+        return token
+    
+    def t_ORDERED(self, token):
+        r'<p>It\sis\sso\sordered\.<\/p>'
         return token
     
     def t_blockquote_B_PARAGRAPH(self, token):
@@ -159,7 +162,7 @@ class Tokenizer(object):
         return token
     
     def t_WHITESPACE(self, token):
-        r' '
+        r'\s'
         return token
     
     def t_WORD(self, token):
@@ -172,6 +175,10 @@ class Tokenizer(object):
     
     def t_MULTI_APOSTROPHES(self, token):
         r"'{2,3}"
+        return token
+    
+    def t_ASTERISKS(self, token):
+        r'\*{3}'
         return token
     
     def t_PUNCTUATION(self, token):

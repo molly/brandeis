@@ -61,31 +61,35 @@ class Parser(object):
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
-    def ignored_tag_content(self, value=None):
+    def ignored_tag_content(self):
         '''Don't want these tags or their content in the output.'''
         self.value = ''
         return self.value
     
-    def ignored_tag(self, value=None):
+    def ignored_tag(self):
         ''''Don't want these tags in the output, but the content is preserved.'''
         self.value = ''
         return self.value
     
-    def source(self, value=None):
+    def source(self):
         '''Keep in metadict, remove from output.'''
-        self.metadict['source'] = value if value else self.value
+        self.metadict['source'] = self.value
         self.value = ''
         return self.value
     
-    def blockquote(self, value=None):
+    def blockquote(self):
         self.value = "\n:"
         return self.value
     
-    def e_blockquote(self, value=None):
+    def e_blockquote(self):
         self.value = '\n'
         return self.value
     
-    def b_paragraph(self, value=None):
+    def section(self):
+        self.value = ''
+        return self.value
+    
+    def b_paragraph(self):
         '''New paragraph within a blockquote; needs its own colon to continue the indentation.'''
         if self.value[0] == '':
             self.value = '\n\n:'
@@ -93,7 +97,7 @@ class Parser(object):
             self.value = ''
         return self.value
     
-    def paragraph(self, value=None):
+    def paragraph(self):
         '''Insert line break if end of paragraph. Ignore otherwise.'''
         #TODO: Handle other formatting
         if self.value[0] == '':
@@ -102,11 +106,10 @@ class Parser(object):
             self.value = ''
         return self.value
         
-    def link(self, value=None):
+    def link(self):
         '''Extract necessary information from the link's HTML to determine if it should be kept'''
-        value = value if value else self.value
-        info = value[0]
-        text = value[1]
+        info = self.value[0]
+        text = self.value[1]
         m_class = re.search(r'class\="(?P<class>.*?)"', info)
         if m_class:
             link_class = m_class.group('class')
@@ -150,16 +153,15 @@ class Parser(object):
         self.value = ''
         return self.value
         
-    def comment(self, value=None):
+    def comment(self):
         '''Don't want HTML comments in the output.'''
         self.value = ''
         return self.value
     
-    def header(self, value=None):
+    def header(self):
         '''Larger text produced by <h#> tags'''
-        value = value if value else self.value
-        level = value[0]
-        content = value[1]
+        level = self.value[0]
+        content = self.value[1]
         if level == '6' or level == '5' or level == '4':
             self.value = "'''" + content + "'''"
         elif level == '3':
@@ -171,45 +173,46 @@ class Parser(object):
         self.value = self.value + '\n\n'
         return self.value
     
-    def html_entity(self, value=None):
-        entity = value if value else self.value
-        if entity == "quot":
+    def html_entity(self):
+        if self.value == "quot":
             self.value = '"'
-        elif entity == "sect":
+        elif self.value == "sect":
             self.value = '§'
-        elif entity == "amp":
+        elif self.value == "amp":
             self.value = '&'
         else:
-            raise EntityError('Unknown entity: ' + entity)
+            raise EntityError('Unknown entity: ' + self.value)
         return self.value
     
-    def whitespace(self, value=None):
+    def whitespace(self):
         self.value = ' '
         return self.value
     
-    def supremelinks(self, value=None):
+    def supremelinks(self):
         '''List of sections. Shouldn't be added to text, not particularly useful to preserve.'''
         self.value = ''
         return self.value
     
-    def consecutive(self, value=None):
+    def consecutive(self):
         '''Strips consecutive italics (</i><i>) that occasionally appear'''
         self.value = ''
         return self.value
     
-    def italics(self, value=None):
+    def italics(self):
         '''Wraps text in double apostrophes.'''
         self.value = "''"
         return self.value
     
-    def bold(self, value=None):
+    def bold(self):
         '''Wraps text in triple apostrophes.'''
         self.value = "'''"
         return self.value
     
-    def smallcaps(self, value=None):
-        if value:
-            self.value = value
+    def ordered(self):
+        self.value = "\n\n{{right|''It is so ordered.''}}\n\n"
+        return self.value
+    
+    def smallcaps(self):
         # Avoid making roman numerals into small caps
         roman = {'I', 'V', 'X', 'L', 'C', 'D', 'M', '.'}
         if len(self.value) <= 5:
@@ -218,37 +221,34 @@ class Parser(object):
         self.value = "{{sc|" + self.value.title() + "}}"
         return self.value
     
-    def word(self, value=None):
-        if value:
-            self.value = value
+    def word(self):
         return self.value
     
-    def b_newline(self, value=None):
+    def b_newline(self):
         '''Newlines within blockquotes need a colon to continue the indentation.'''
         self.value = '\n:'
         return self.value
     
-    def newline(self, value=None):
+    def newline(self):
         '''Newlines should be preserved. Extraneous ones will be removed in post-processing.'''
         self.value = '\n'
         return self.value
     
-    def number(self, value=None):
-        if value:
-            self.value = value
+    def number(self):
         return self.value
     
-    def multi_apostrophes(self, value=None):
+    def multi_apostrophes(self):
         '''If multiple apostrophes appear in the text (as they do, occasionally, due to bad OCR), 
         escape them with <nowiki></nowiki> to avoid borking the italics/bold'''
-        if value:
-            self.value = value
         self.value = "<nowiki>" + self.value + "</nowiki>"
         return self.value
         
-    def punctuation(self, value=None):
-        if value:
-            self.value = value
+    def asterisks(self):
+        # For the three-asterisks-in-a-row thing that has no good name
+        self.value = '{{***}}'
+        return self.value
+    
+    def punctuation(self):
         if self.value == "'":
             # Replace apostrophes with ¤ for now to reduce conflicts with italics/bold
             self.value = "¤"
