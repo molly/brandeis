@@ -31,50 +31,69 @@ class BotParser(object):
             outputfile.write(content)
         
     def footnotes(self):
-        max_footnote = self.metadict['max_footnote']
-        for sect in range(1, len(max_footnote)+1):
-            with open(self.output, 'r', encoding='utf-8') as inputfile:
-                content = inputfile.read()
-            section = '' if sect == 1 else str(sect) + '/'
-            footnote_start = content.find('Footnote ' + section + '1')
-            content = [content[:footnote_start], content[footnote_start:]]
-            text = content[0]
-            footnotes = content[1]
-            footnotes = footnotes.split('\n\n')
-            foot_no = 1
-            ind = 0
-            foot_text = ''
-            footnote_texts = []
-            while ind < len(footnotes) and foot_no <= int(max_footnote[str(sect)]):
-                if footnotes[ind] == 'Footnote ' + section + str(foot_no):
-                    ind += 1
-                    if foot_no == max_footnote:
-                        foot_text += footnotes[ind]
+        if 'max_footnote' in self.metadict:
+            max_footnote = self.metadict['max_footnote']
+            for sect in range(1, len(max_footnote)+1):
+                with open(self.output, 'r', encoding='utf-8') as inputfile:
+                    content = inputfile.read()
+                section = '' if sect == 1 else str(sect) + '/'
+                footnote_start = content.find('Footnote ' + section + '1')
+                content = [content[:footnote_start], content[footnote_start:]]
+                text = content[0]
+                footnotes = content[1]
+                footnotes = footnotes.split('\n\n')
+                foot_no = 1
+                ind = 0
+                foot_text = ''
+                footnote_texts = []
+                while ind < len(footnotes) and foot_no <= int(max_footnote[str(sect)]):
+                    if footnotes[ind] == 'Footnote ' + section + str(foot_no):
                         ind += 1
-                    else:
-                        while ind < len(footnotes) and footnotes[ind] != 'Footnote ' + section + str(foot_no + 1):
-                            if foot_text != '':
-                                foot_text += '\n\n'
+                        if foot_no == max_footnote:
                             foot_text += footnotes[ind]
                             ind += 1
-                    footnote_texts.append(foot_text)
-                    foot_text = ''
-                    foot_no += 1
-                else:
-                    raise MissingFootnote( foot_no )
-            trailing = '\n\n'.join(footnotes[ind:])
+                        else:
+                            while ind < len(footnotes) and footnotes[ind] != 'Footnote ' + section + str(foot_no + 1):
+                                if foot_text != '':
+                                    foot_text += '\n\n'
+                                foot_text += footnotes[ind]
+                                ind += 1
+                        footnote_texts.append(foot_text)
+                        foot_text = ''
+                        foot_no += 1
+                    else:
+                        raise MissingFootnote( foot_no )
+                trailing = '\n\n'.join(footnotes[ind:])
+                  
+                end_footnote = '</ref>'
+                for i in range(1,int(max_footnote[str(sect)])+1):
+                    split = []
+                    current_footnote = '<ref name="ref{}">'.format(section + str(i))
+                    x = text.find(current_footnote)
+                    split.append(text[:x+len(current_footnote)])
+                    split.append(text[x+len(current_footnote):])
+                    text = split[0] + footnote_texts[i-1] + split[1]
               
-            end_footnote = '</ref>'
-            for i in range(1,int(max_footnote[str(sect)])+1):
-                split = []
-                current_footnote = '<ref name="ref{}">'.format(section + str(i))
-                x = text.find(current_footnote)
-                split.append(text[:x+len(current_footnote)])
-                split.append(text[x+len(current_footnote):])
-                text = split[0] + footnote_texts[i-1] + split[1]
-          
-            with open(self.output, 'w', encoding='utf-8') as output:
-                output.write(text + trailing)
+                with open(self.output, 'w', encoding='utf-8') as output:
+                    output.write(text + trailing)
+                    
+    def pages(self):
+        '''Replace page numbers with {{page break}} template, join any hyphenated words.'''
+        with open(self.output, 'r', encoding='utf-8') as inputfile:
+            content = inputfile.read()
+        split = re.split(r'(\n{2}PAGE\s\d+\n{2})', content)
+        for i in range(len(split)):
+            if split[i][:6] == '\n\nPAGE':
+                number_m = re.match(r'\n{2}PAGE\s(?P<number>\d+)\n{2}', split[i])
+                split[i] = (' \n{{page break|' + number_m.group('number') + 
+                            '|left}}\n')
+            elif split[i][-1] == '-':
+                temp = split[i+2].split(' ', 1)
+                split[i] = split[i][:-1] + temp[0]
+                split[i+2] = temp[1]        
+        content = '<div class="indented-page">' + ''.join(split) + '</div>'
+        with open(self.output, 'w', encoding='utf-8') as output:
+            output.write(content)
 
     def sectionize(self):
         self.metadict['sections'] = dict()
@@ -90,7 +109,7 @@ class BotParser(object):
                 if len(paras[i]) < 400:
                     if 'syllabus' in paras[i].lower():
                         if 'syllabus' not in self.metadict['sections']:
-                            output.write('SYLLABUS' + '-'*80 + '\n')
+                            output.write('SYLLABUS' + '-'*80 + '\n\n')
                             self.metadict['sections']['syllabus'] = i
                     elif re.search(r',\sconcurring(\.|\Z)', paras[i], re.IGNORECASE):
                         sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sconcurring(\.|\Z)',

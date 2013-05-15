@@ -30,3 +30,4 @@ class Bot(object):
         # Prepare file so the bot can upload it
         self.parser.sectionize()
         self.parser.footnotes()
+        self.parser.pages()
