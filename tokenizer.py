@@ -132,7 +132,7 @@ class Tokenizer(object):
         return token
     
     def t_HTML_ENTITY(self, token):
-        r'&(?P<entity>[#a-z0-9]{6});'
+        r'&(?P<entity>[a-zA-Z]+|\#[0-9]{4});'
         token.value = token.lexer.lexmatch.group('entity')
         return token
     

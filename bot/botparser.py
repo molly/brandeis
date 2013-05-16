@@ -26,10 +26,42 @@ class BotParser(object):
         self.output = output
         self.metadict = metadict
         self.logger = logging.getLogger('brandeis')
+        self.case_caption = ('{{{{CaseCaption \n| court = United States Supreme Court\n| volume = {volume}\n| reporter = U.S.\n| page = {page}\n|'
+                             ' party1 = {petitioner}\n| party2 = {respondent}\n| lowercourt = \n| argued = {argued} \n| decided = {decided}'
+                             '\n| case no = {case_number}\n}}}}')
+        self.months = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
         with open(inputfile, 'r', encoding='utf-8') as in_file:
             content = in_file.read()
         with open(self.output, 'w', encoding='utf-8') as outputfile:
             outputfile.write(content)
+        
+    def add_templates(self):
+        with open(self.output, 'r', encoding='utf-8') as input:
+            top = input.read(500)
+        parameters = ['volume', 'page', 'petitioner', 'respondent', 'argued', 'decided', 'case_number']
+        case_number = re.search(r'No\.\s(?P<no>\d+\-\d+)', top)
+        if case_number:
+            self.metadict['case_number'] = case_number.group('no')
+        argued = re.search(r'(?:Argued|Submitted)\s(?P<date>' + self.months + r'\s\d{1,2},\s\d{4})', top)
+        if argued:
+            self.metadict['argued'] = argued.group('date')
+        decided = re.search(r'Decided\s(?P<date>' + self.months + r'\s\d{1,2},\s\d{4})', top)
+        if decided:
+            self.metadict['decided'] = decided.group('date')
+        for parameter in parameters:
+            if not parameter in self.metadict:
+                self.metadict[parameter] = ''
+                self.logger.warning('No value for ' + parameter + ' in dictionary.')
+                
+        with open(self.output, 'r', encoding='utf-8') as input:
+            content = input.read()
+        ind = content.find('<div class="indented-page">')
+        new = content[:ind+27]
+        rest = re.search(r'\n\n([^\n]{70,})', content)
+        new += '\n\n' + self.case_caption.format(**self.metadict) +'\n'
+        new += content[rest.start():]
+        with open(self.output, 'w', encoding='utf-8') as output:
+            output.write(new)
         
     def footnotes(self):
         '''Parse out footnotes into <ref></ref> tags. It does what it can, but it's highly
@@ -105,13 +137,13 @@ class BotParser(object):
         for i in range(len(split)):
             if split[i][:6] == '\n\nPAGE':
                 number_m = re.match(r'\n{2}PAGE\s(?P<number>\d+)\n{2}', split[i])
-                split[i] = (' \n{{page break|' + number_m.group('number') + 
-                            '|left}}\n')
+                split[i] = ('\n\n{{page break|' + number_m.group('number') + 
+                            '|left}}\n\n')
             elif split[i][-1] == '-':
                 temp = split[i+2].split(' ', 1)
                 split[i] = split[i][:-1] + temp[0]
                 split[i+2] = temp[1]        
-        content = '<div class="indented-page">' + ''.join(split) + '</div>'
+        content = '<div class="indented-page">\n' + ''.join(split) + '</div>'
         with open(self.output, 'w', encoding='utf-8') as output:
             output.write(content)
 
@@ -141,7 +173,7 @@ class BotParser(object):
                             justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
                             justice = justices.group('justice')
                             if not justice in self.metadict['sections']['concurrence_justices']:
-                                output.write('CONCURRENCE' + '-'*80 + '\n\n')
+                                output.write('CONCURRENCE' + '-'*80 + justice + '\n\n')
                                 self.metadict['sections']['concurrence_justices'].append(justice)
                                 self.metadict['sections']['concurrence'].append(i)
                     elif re.search(r',\sdissenting(\.|\Z)', paras[i], re.IGNORECASE):
@@ -152,7 +184,7 @@ class BotParser(object):
                             justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
                             justice = justices.group('justice')
                             if not justice in self.metadict['sections']['dissent_justices']:
-                                output.write('DISSENT' + '-'*80 + '\n\n')
+                                output.write('DISSENT' + '-'*80 + justice + '\n\n')
                                 self.metadict['sections']['dissent_justices'].append(justice)
                                 self.metadict['sections']['dissent'].append(i)
                     elif 'per curiam' in paras[i].lower():
@@ -180,3 +212,27 @@ class BotParser(object):
                 self.logger.warning("\t" + key + ": " + str(len(value)))
             else:
                 self.logger.warning("\tNo " + key + ".")
+                
+    def split_pages(self):
+        '''Split pages for pywikipediabot.'''
+        with open (self.output, 'r', encoding='utf-8') as file:
+            content = file.read()
+        split = re.split(r'((?:\n{0,2})[A-Z ]+[-]{80}(?:[A-Za-z]+)?(?:\n{0,2}))', content)
+        for i in range (len(split)):
+            divider = re.match(r'\n{0,2}(?P<section>[A-Za-z ]+)[-]{80}(?P<justice>[A-Za-z]+)?\n{0,2}', split[i])
+            if divider:
+                section_name = divider.group('section')
+                if section_name == 'SYLLABUS':
+                    split[i] = '\n\n'
+                else:
+                    if section_name == 'DISSENT' or section_name == 'CONCURRENCE':
+                        justice = divider.group('justice')
+                        if justice == None:
+                            self.logger.warning("Missing justice name for " + section_name + ".")
+                            justice = ''
+                    else:
+                        justice = ''
+                    split[i] = ("\n{{-stop-}}\n{{-start-}}\n'''" + self.metadict['title'] + "/" +
+                                section_name.title() + " " + justice + "'''\n")
+        with open (self.output, 'w', encoding='utf-8') as output:
+            output.write("{{-start-}}\n" + ''.join(split) + "\n{{-stop-}}")

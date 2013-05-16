@@ -34,4 +34,5 @@ class Bot(object):
         self.parser.pages()
         if 'pdf' in self.metadict:
             self.metadict['pdf_filename'] = get_scan(self.inputfile, self.metadict['pdf'])
-            print(self.metadict['pdf_filename'])
+        self.parser.split_pages()
+        self.parser.add_templates()
