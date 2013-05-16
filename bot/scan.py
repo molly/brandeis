@@ -17,21 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from bot.botparser import BotParser
-from bot.scan import *
+import os
+from urllib.request import urlretrieve
 
-class Bot(object):
-    def __init__(self, inputfile, output, metadict):
-        self.inputfile = inputfile
-        self.output = output
-        self.metadict = metadict
-        self.parser = BotParser(self.inputfile, self.output, self.metadict)
-        
-    def prepare(self):
-        '''Prepare file so the bot can upload it.'''
-        self.parser.sectionize()
-        self.parser.footnotes()
-        self.parser.pages()
-        if 'pdf' in self.metadict:
-            self.metadict['pdf_filename'] = get_scan(self.inputfile, self.metadict['pdf'])
-            print(self.metadict['pdf_filename'])
+def get_scan(inputfile, url):
+    filename = 'botfiles/pdfs/' + inputfile.replace('wikitext/', '') + '.pdf'
+    if not os.path.isfile(filename):
+        urlretrieve(url, filename)
+    return filename
