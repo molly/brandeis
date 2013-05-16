@@ -85,10 +85,11 @@ class BotParser(object):
                         self.logger.warning("Unable to find an in-text tag for footnote #" +
                                             section + str(i) + ". It has been omitted.")
                         continue
-                    split.append(text[:x+len(current_footnote)])
+                    split.append(text[:x-1])
+                    split.append(text[x:x+len(current_footnote)])
                     split.append(text[x+len(current_footnote):])
                     footnote_texts[i-1] = ' ' if footnote_texts[i-1] == '' else footnote_texts[i-1]
-                    text = split[0] + footnote_texts[i-1] + split[1]
+                    text = split[0] + split[1] + footnote_texts[i-1] + split[2]
               
                 with open(self.output, 'w', encoding='utf-8') as output:
                     output.write(text + trailing)

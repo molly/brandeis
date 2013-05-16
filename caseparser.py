@@ -126,7 +126,7 @@ class Parser(object):
                 href = m_href.group('href')
                 self.metadict['pdf'] = href
         else:
-            m_href = re.search(r'href\="(?P<href>.*?)"', info)
+            m_href = re.search(r'''href\=["'](?P<href>.*?)["']''', info)
             if m_href:
                 href = m_href.group('href')
                 if 'cases/federal/us' in href:
@@ -136,8 +136,12 @@ class Parser(object):
                     # Footnotes
                     intext = re.match(r'^#F(?P<number>\d+?(\/\d+)?)$', href, re.MULTILINE)
                     if intext:
-                        self.value = '<ref name="ref{0}"></ref>'.format(intext.group('number'))
-                        return self.value
+                        if 'Footnote' in text:
+                            self.value = '<ref name="ref{0}"></ref>'.format(intext.group('number'))
+                            return self.value
+                        else:
+                            self.value = text
+                            return self.value
                     else:
                         footnote = re.match(r'^#T(?P<number1>\d+?)(?:\/(?P<number2>\d+))?$', href, re.MULTILINE)
                         if footnote:

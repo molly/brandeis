@@ -135,6 +135,10 @@ for file in files:
         os.mkdir('botfiles')
     except OSError:
         pass
+    try:
+        os.mkdir('botfiles/pdfs')
+    except OSError:
+        pass
     bot_filename = out_filename.replace('wikitext', 'botfiles')
     bot = Bot(out_filename, bot_filename, metadict)
     bot.prepare()

@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from bot.botparser import BotParser
+from bot.scan import *
 
 class Bot(object):
     def __init__(self, inputfile, output, metadict):
@@ -31,3 +32,5 @@ class Bot(object):
         self.parser.sectionize()
         self.parser.footnotes()
         self.parser.pages()
+        if 'pdf' in self.metadict:
+            get_scan(self.inputfile, self.metadict['pdf'])

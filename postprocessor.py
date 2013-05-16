@@ -28,7 +28,7 @@ class Postprocessor(object):
         '''Dispatcher method.'''
         self.clean_spaces()
         self.multiline_bold()
-        self.multiline_italic()
+#         self.multiline_italic()
         self.fix_apostrophes()
         self.clean_spaces() #Once more for good measure.
     
@@ -63,18 +63,7 @@ class Postprocessor(object):
         for i in range(len(content)):
             if content[i]:
                 if ( i%2 ):
-                    if '\n' in content[i]:
-                        lines = content[i].split('\n')
-                        for line in lines:
-                            if line == '' or line == ' ':
-                                new += '\n'
-                            else:
-                                new += "'''" + line + "'''"
-                    else:
-                        if content[i][-4] == " ":
-                            # Move spaces before ending apostrophes outside ('''foo ''' -> '''foo''' )
-                            content[i] = content[i][:-4] + "''' "
-                        new += content[i]
+                    new += "'''" + content[i] + "'''"
                 else:
                     new += content[i]
         with open(self.filename, 'w', encoding='utf-8') as output:
@@ -89,18 +78,7 @@ class Postprocessor(object):
         for i in range(len(content)):
             if content[i]:
                 if ( i%2 ):
-                    if '\n' in content[i]:
-                        lines = content[i].split('\n')
-                        for line in lines:
-                            if line == '' or line == ' ':
-                                new += '\n'
-                            else:
-                                new += "''" + line + "''"
-                    else:
-                        if content[i][-3] == " ":
-                            # Move spaces before ending apostrophes outside (''foo '' -> ''foo'' )
-                            content[i] = content[i][:-3] + "'' "
-                        new += content[i]
+                    new += "''" + content[i] + "''"
                 else:
                     new += content[i]
         with open(self.filename, 'w', encoding='utf-8') as output:

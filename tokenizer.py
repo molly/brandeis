@@ -132,7 +132,7 @@ class Tokenizer(object):
         return token
     
     def t_HTML_ENTITY(self, token):
-        r'&(?P<entity>[#a-z]+);'
+        r'&(?P<entity>[#a-z0-9]{6});'
         token.value = token.lexer.lexmatch.group('entity')
         return token
     
@@ -142,7 +142,7 @@ class Tokenizer(object):
         return token
     
     def t_ITALICS(self, token):
-        r'<\/?([Ii]|em|EM)>'
+        r'(<\/?([Ii]|em|EM)>)+'
         return token
     
     def t_BOLD(self, token):
