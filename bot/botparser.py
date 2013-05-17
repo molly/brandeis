@@ -26,9 +26,14 @@ class BotParser(object):
         self.output = output
         self.metadict = metadict
         self.logger = logging.getLogger('brandeis')
-        self.case_caption = ('{{{{CaseCaption \n| court = United States Supreme Court\n| volume = {volume}\n| reporter = U.S.\n| page = {page}\n|'
-                             ' party1 = {petitioner}\n| party2 = {respondent}\n| lowercourt = \n| argued = {argued} \n| decided = {decided}'
-                             '\n| case no = {case_number}\n}}}}')
+        self.case_caption = ('{{{{CaseCaption \n| court = United States Supreme Court\n| volume = '
+                             '{volume}\n| reporter = U.S.\n| page = {page}\n| party1 = {petitioner}'
+                             '\n| party2 = {respondent}\n| lowercourt = \n| argued = {argued} \n| '
+                             'decided = {decided}\n| case no = {case_number}\n}}}}')
+        self.header = ('{{{{header\n | title = {{{{subst:PAGENAME}}}}\n | author = \n | translator '
+                       '= \n | section = {{{{subst:SUBPAGENAME}}}}\n | previous = {previous}\n | next = {next}\n'
+                       ' | year = {year}\n | notes = \n | categories = \n| portal = Supreme Court of '
+                       'the United States\n}}}}')
         self.months = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
         with open(inputfile, 'r', encoding='utf-8') as in_file:
             content = in_file.read()
@@ -36,29 +41,34 @@ class BotParser(object):
             outputfile.write(content)
         
     def add_templates(self):
+        '''Add templates to the top of the syllabus page.'''
         with open(self.output, 'r', encoding='utf-8') as input:
             top = input.read(500)
-        parameters = ['volume', 'page', 'petitioner', 'respondent', 'argued', 'decided', 'case_number']
+        parameters = ['volume', 'page', 'petitioner', 'respondent', 'argued', 'decided',
+                      'case_number']
         case_number = re.search(r'No\.\s(?P<no>\d+\-\d+)', top)
         if case_number:
             self.metadict['case_number'] = case_number.group('no')
-        argued = re.search(r'(?:Argued|Submitted)\s(?P<date>' + self.months + r'\s\d{1,2},\s\d{4})', top)
+        argued = re.search(r'(?:Argued|Submitted)\s(?P<date>' + self.months +
+                           r'\s\d{1,2},\s\d{4})', top)
         if argued:
             self.metadict['argued'] = argued.group('date')
-        decided = re.search(r'Decided\s(?P<date>' + self.months + r'\s\d{1,2},\s\d{4})', top)
+        decided = re.search(r'Decided\s(?P<date>' + self.months +
+                            r'\s\d{1,2},\s\d{4})', top)
         if decided:
             self.metadict['decided'] = decided.group('date')
         for parameter in parameters:
             if not parameter in self.metadict:
                 self.metadict[parameter] = ''
-                self.logger.warning('No value for ' + parameter + ' in dictionary.')
+                self.logger.warning('No value for ' + parameter +
+                                    ' in dictionary.')
                 
         with open(self.output, 'r', encoding='utf-8') as input:
             content = input.read()
         ind = content.find('<div class="indented-page">')
         new = content[:ind+27]
         rest = re.search(r'\n\n([^\n]{70,})', content)
-        new += '\n\n' + self.case_caption.format(**self.metadict) +'\n'
+        new += '\n\n' + self.case_caption.format(**self.metadict) + '\n'
         new += content[rest.start():]
         with open(self.output, 'w', encoding='utf-8') as output:
             output.write(new)
@@ -128,7 +138,56 @@ class BotParser(object):
                     
             with open(self.output, 'a', encoding='utf-8') as output:
                 output.write('{{smallrefs}}\n')
-                    
+                
+    def headers(self):
+        with open(self.output, 'r', encoding='utf-8') as inputfile:
+            content = inputfile.read()
+        split = re.split(r"(\{{2}\-start\-\}{2}\n(?:'''.*?'''\n|<div.*?\n))", content)
+        sections = []
+        new = []
+        for i in range(len(split)):
+            if i%2 == 1:
+                match = re.search(r"'''(.*?)'''", split[i])
+                if match:
+                    name = match.group(1)
+                    if '/' in name:
+                        section = '/' + name.split('/')[1]
+                        if 'Dissent' in section:
+                            section = section + '|Dissent'
+                        elif 'Concurrence' in section:
+                            section = section + '|Concurrence'
+                        else:
+                            section = section + '|'
+                        sections.append(section)
+                    else:
+                        sections.append('Syllabus')
+        x=0
+        for i in range(1, len(split)):
+            if i%2 == 0:
+                if x == 0:
+                    header = self.header.format(section=sections[x], previous='', next='[[' + sections[x+1] + ']]', year=self.metadict['date'])
+                elif x == 1:
+                    header = self.header.format(section=sections[x], previous='[[/|Syllabus]]', next='[[' + sections[x+1] + ']]', year=self.metadict['date'])
+                elif x == len(sections)-1:
+                    header = self.header.format(section=sections[x], previous='[[' + sections[x-1] + ']]', next='', year=self.metadict['date'])
+                else:
+                    header = self.header.format(section=sections[x], previous= '[[' + sections[x-1] + ']]', next='[[' + sections[x+1] + ']]', year=self.metadict['date'])
+                new.append(header + '\n')
+                new.append(split[i])
+                x+=1
+            else:
+                new.append(split[i])
+        with open(self.output, 'w', encoding='utf-8') as output:
+            output.write(''.join(new))
+            
+    def move_pages(self):
+        '''Moves page numbers that occur right before a break.'''
+        with open(self.output, 'r', encoding="utf-8") as inputfile:
+            content = inputfile.read()
+        new = re.sub(r"(?P<break>\{{2}page\sbreak\|\d+\|left\}{2}\n)(?P<rest>\{{2}\-stop\-\}{2}\n\{{2}\-start\-\}{2}\n'''(?:.*?)'''\n)", '\g<rest>\g<break>', content)
+        with open(self.output, 'w', encoding="utf-8") as output:
+            output.write(new)
+                  
     def pages(self):
         '''Replace page numbers with {{page break}} template, join any hyphenated words.'''
         with open(self.output, 'r', encoding='utf-8') as inputfile:
@@ -235,4 +294,4 @@ class BotParser(object):
                     split[i] = ("\n{{-stop-}}\n{{-start-}}\n'''" + self.metadict['title'] + "/" +
                                 section_name.title() + " " + justice + "'''\n")
         with open (self.output, 'w', encoding='utf-8') as output:
-            output.write("{{-start-}}\n" + ''.join(split) + "\n{{-stop-}}")
+            output.write("{{-start-}}\n'''" + self.metadict['title'] + "'''\n" + ''.join(split) + "\n{{-stop-}}")
