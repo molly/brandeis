@@ -33,7 +33,7 @@ class BotParser(object):
                              'decided = {decided}\n| case no = {case_number}\n}}}}')
         self.header = ('{{{{header\n | title = {{{{subst:PAGENAME}}}}\n | author = \n | translator '
                        '= \n | section = {{{{subst:SUBPAGENAME}}}}\n | previous = {previous}\n | next = {next}\n'
-                       ' | year = {year}\n | notes = \n | categories = \n| portal = Supreme Court of '
+                       ' | year = {year}\n | notes = \n | categories = \n | portal = Supreme Court of '
                        'the United States\n}}}}')
         self.months = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
         self.pagelist = ['']
@@ -43,16 +43,15 @@ class BotParser(object):
         self.sectionize()
         self.footnotes()
         self.pages()
-#         self.move_pages()
-#         self.add_templates()
-#         self.headers()
+        self.move_pages()
+        self.add_templates()
+        self.headers()
         with open(self.output, 'w', encoding="utf-8") as output:
             output.write('\n'.join(self.pagelist))
         
     def add_templates(self):
         '''Add templates to the top of the syllabus page.'''
-        with open(self.output, 'r', encoding='utf-8') as input:
-            top = input.read(500)
+        top = self.pagelist[0][:500] if len(self.pagelist[0]) >= 500 else self.pagelist[0]
         parameters = ['volume', 'page', 'petitioner', 'respondent', 'argued', 'decided',
                       'case_number']
         case_number = re.search(r'No\.\s(?P<no>\d+\-\d+)', top)
@@ -72,15 +71,12 @@ class BotParser(object):
                 self.logger.warning('No value for ' + parameter +
                                     ' in dictionary.')
                 
-        with open(self.output, 'r', encoding='utf-8') as input:
-            content = input.read()
-        ind = content.find('<div class="indented-page">')
-        new = content[:ind+27]
-        rest = re.search(r'\n\n([^\n]{70,})', content)
-        new += '\n\n' + self.case_caption.format(**self.metadict) + '\n'
-        new += content[rest.start():]
-        with open(self.output, 'w', encoding='utf-8') as output:
-            output.write(new)
+        ind = self.pagelist[0].find('{{-start-}}')
+        new = self.pagelist[0][:ind+11] + "\n'''" + self.metadict['title'] + "'''\n"
+        rest = re.search(r'\n\n([^\n]{70,})', self.pagelist[0])
+        new += '\n' + self.case_caption.format(**self.metadict)
+        new += self.pagelist[0][rest.start():]
+        self.pagelist[0] = new
         
     def footnotes(self):
         '''Parse out footnotes into <ref></ref> tags. It does what it can, but it's highly
@@ -153,8 +149,7 @@ class BotParser(object):
                                 self.pagelist[page_num] = split[0] + split[1] + footnote_texts[j-1] + split[2]
                 
     def headers(self):
-        with open(self.output, 'r', encoding='utf-8') as inputfile:
-            content = inputfile.read()
+        content = ''.join(self.pagelist)
         split = re.split(r"(\{{2}\-start\-\}{2}\n(?:'''.*?'''\n|<div.*?\n))", content)
         sections = []
         new = []
@@ -174,32 +169,42 @@ class BotParser(object):
                         sections.append(section)
                     else:
                         sections.append('Syllabus')
-        x=0
-        for i in range(1, len(split)):
-            if i%2 == 0:
-                if x == 0:
-                    header = self.header.format(section=sections[x], previous='', next='[[' + sections[x+1] + ']]', year=self.metadict['date'])
-                elif x == 1:
-                    header = self.header.format(section=sections[x], previous='[[/|Syllabus]]', next='[[' + sections[x+1] + ']]', year=self.metadict['date'])
-                elif x == len(sections)-1:
-                    header = self.header.format(section=sections[x], previous='[[' + sections[x-1] + ']]', next='', year=self.metadict['date'])
-                else:
-                    header = self.header.format(section=sections[x], previous= '[[' + sections[x-1] + ']]', next='[[' + sections[x+1] + ']]', year=self.metadict['date'])
-                new.append(header + '\n')
-                new.append(split[i])
-                x+=1
+        for page_num in range(len(self.pagelist)):
+            if page_num == 0:
+                header = self.header.format(section=sections[page_num], previous='', next='[[' +
+                                            sections[page_num+1] + ']]', year=self.metadict['date'])
+            elif page_num == 1:
+                header = self.header.format(section=sections[page_num], previous='[[/|Syllabus]]',
+                                            next='[[' + sections[page_num+1] + ']]',
+                                            year=self.metadict['date'])
+            elif page_num == len(sections)-1:
+                header = self.header.format(section=sections[page_num], previous='[[' +
+                                            sections[page_num-1] + ']]', next='',
+                                            year=self.metadict['date'])
             else:
-                new.append(split[i])
-        with open(self.output, 'w', encoding='utf-8') as output:
-            output.write(''.join(new))
+                header = self.header.format(section=sections[page_num], previous= '[[' +
+                                            sections[page_num-1] + ']]', next='[[' +
+                                            sections[page_num+1] + ']]', year=self.metadict['date'])
+            page_split = re.split(r"(\{{2}-start-\}{2}\n*(?:'''.*?''')?\n?)",
+                                  self.pagelist[page_num], re.DOTALL)
+            try:
+                ind = page_split[2].find('\n{{-stop-}}')
+                page_split[2] = page_split[2][:ind] + '\n</div>' + page_split[2][ind:]
+                self.pagelist[page_num] = page_split[0] + page_split[1] + '<div class="indented-page">\n' + header + page_split[2]
+            except IndexError:
+                self.logger.warning("Unable to add a header for page " + str(page_num) + ".")
+            
             
     def move_pages(self):
         '''Moves page numbers that occur right before a break.'''
-        with open(self.output, 'r', encoding="utf-8") as inputfile:
-            content = inputfile.read()
-        new = re.sub(r"(?P<break>\{{2}page\sbreak\|\d+\|left\}{2}\n)(?P<rest>\{{2}\-stop\-\}{2}\n\{{2}\-start\-\}{2}\n'''(?:.*?)'''\n)", '\g<rest>\g<break>', content)
-        with open(self.output, 'w', encoding="utf-8") as output:
-            output.write(new)
+        for i in range(len(self.pagelist)):
+            match = re.search(r'(?P<page>\{{2}page\sbreak\|\d+\|left\}{2})(\s|\n)*\{{2}smallrefs',
+                              self.pagelist[i])
+            if match:
+                self.pagelist[i].replace(match.group('page'), '')
+                split = re.split(r"(\{{2}\-start\-\}{2}\n+'{3}.*?'{3}\n)",self.pagelist[i+1])
+                self.pagelist[i+1] = (split[0] + split[1] + '\n' + match.group('page') + '\n' +
+                                      split[2])
                   
     def pages(self):
         '''Replace page numbers with {{page break}} template, join any hyphenated words.'''
@@ -213,8 +218,8 @@ class BotParser(object):
                 elif split[i][-1] == '-':
                     temp = split[i+2].split(' ', 1)
                     split[i] = split[i][:-1] + temp[0]
-                    split[i+2] = temp[1]        
-            content = '<div class="indented-page">\n' + ''.join(split) + '</div>'
+                    split[i+2] = temp[1]
+            content = ''.join(split)
             self.pagelist[page_num] = content
 
     def sectionize(self):
@@ -243,7 +248,8 @@ class BotParser(object):
                         justice = justices.group('justice')
                         if not justice in self.metadict['sections']['concurrence_justices']:
                             self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
-                            self.pagelist.append("\n{{-start-}}\n'''" + self.metadict['title'] + "/Concurrence " + justice + "'''\n")
+                            self.pagelist.append("\n{{-start-}}\n'''" + self.metadict['title'] +
+                                                 "/Concurrence " + justice + "'''\n")
                             self.metadict['sections']['concurrence_justices'].append(justice)
                             self.metadict['sections']['concurrence'].append(i)
                 elif re.search(r',\sdissenting(\.|\Z)', paras[i], re.IGNORECASE):
@@ -255,18 +261,21 @@ class BotParser(object):
                         justice = justices.group('justice')
                         if not justice in self.metadict['sections']['dissent_justices']:
                             self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
-                            self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] + "/Dissent " + justice + "'''\n")
+                            self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
+                                                 "/Dissent " + justice + "'''\n")
                             self.metadict['sections']['dissent_justices'].append(justice)
                             self.metadict['sections']['dissent'].append(i)
                 elif 'per curiam' in paras[i].lower():
                     if 'per curiam' not in self.metadict['sections']:
                         self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
-                        self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] + "/Per Curiam'''\n")
+                        self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
+                                             "/Per Curiam'''\n")
                         self.metadict['sections']['per curiam'] = i
                 elif 'delivered the opinion' in paras[i].lower():
                     if 'opinion' not in self.metadict['sections']:
                         self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
-                        self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] + "/Opinion'''\n")
+                        self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
+                                             "/Opinion'''\n")
                         self.metadict['sections']['opinion'] = i
                 self.pagelist[ind] += (paras[i] + '\n\n')
             else:
