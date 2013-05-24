@@ -38,6 +38,17 @@ class BotParser(object):
         self.months = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
         self.pagelist = ['']
         
+    def prepare(self):
+        '''Prepare file so the bot can upload it.'''
+        self.sectionize()
+        self.footnotes()
+        self.pages()
+#         self.move_pages()
+#         self.add_templates()
+#         self.headers()
+        with open(self.output, 'w', encoding="utf-8") as output:
+            output.write('\n'.join(self.pagelist))
+        
     def add_templates(self):
         '''Add templates to the top of the syllabus page.'''
         with open(self.output, 'r', encoding='utf-8') as input:
@@ -135,15 +146,11 @@ class BotParser(object):
                                                     section + str(j) + ". It has been omitted.")
                                 continue
                             else:
-                                print(page_num, current_footnote, footnote_texts[j-1])
                                 split.append(self.pagelist[page_num][:x-1])
                                 split.append(self.pagelist[page_num][x:x+len(current_footnote)])
                                 split.append(self.pagelist[page_num][x+len(current_footnote):])
                                 footnote_texts[j-1] = ' ' if footnote_texts[j-1] == '' else footnote_texts[j-1]
                                 self.pagelist[page_num] = split[0] + split[1] + footnote_texts[j-1] + split[2]
-                      
-        with open(self.output, 'w', encoding='utf-8') as output:
-            output.write('\n'.join(self.pagelist))
                 
     def headers(self):
         with open(self.output, 'r', encoding='utf-8') as inputfile:
@@ -196,21 +203,19 @@ class BotParser(object):
                   
     def pages(self):
         '''Replace page numbers with {{page break}} template, join any hyphenated words.'''
-        with open(self.output, 'r', encoding='utf-8') as inputfile:
-            content = inputfile.read()
-        split = re.split(r'(\n{2}PAGE\s\d+\n{2})', content)
-        for i in range(len(split)):
-            if split[i][:6] == '\n\nPAGE':
-                number_m = re.match(r'\n{2}PAGE\s(?P<number>\d+)\n{2}', split[i])
-                split[i] = ('\n\n{{page break|' + number_m.group('number') + 
-                            '|left}}\n\n')
-            elif split[i][-1] == '-':
-                temp = split[i+2].split(' ', 1)
-                split[i] = split[i][:-1] + temp[0]
-                split[i+2] = temp[1]        
-        content = '<div class="indented-page">\n' + ''.join(split) + '</div>'
-        with open(self.output, 'w', encoding='utf-8') as output:
-            output.write(content)
+        for page_num in range(len(self.pagelist)):
+            split = re.split(r'(\n{2}PAGE\s\d+\n{2})', self.pagelist[page_num])
+            for i in range(len(split)):
+                if split[i][:6] == '\n\nPAGE':
+                    number_m = re.match(r'\n{2}PAGE\s(?P<number>\d+)\n{2}', split[i])
+                    split[i] = ('\n\n{{page break|' + number_m.group('number') + 
+                                '|left}}\n\n')
+                elif split[i][-1] == '-':
+                    temp = split[i+2].split(' ', 1)
+                    split[i] = split[i][:-1] + temp[0]
+                    split[i+2] = temp[1]        
+            content = '<div class="indented-page">\n' + ''.join(split) + '</div>'
+            self.pagelist[page_num] = content
 
     def sectionize(self):
         '''Attempt to parse out any changes in section. Again, this is highly dependent on the input

@@ -29,12 +29,6 @@ class Bot(object):
         
     def prepare(self):
         '''Prepare file so the bot can upload it.'''
-        self.parser.sectionize()
-        self.parser.footnotes()
-#         if 'pdf' in self.metadict:
-#             self.metadict['pdf_filename'] = get_scan(self.inputfile, self.metadict['pdf'])
-#         self.parser.pages()
-#         self.parser.split_pages()
-#         self.parser.move_pages()
-#         self.parser.add_templates()
-#         self.parser.headers()
+        self.parser.prepare()
+        if 'pdf' in self.metadict:
+            self.metadict['pdf_filename'] = get_scan(self.inputfile, self.metadict['pdf'])
