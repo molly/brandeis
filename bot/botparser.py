@@ -24,6 +24,7 @@ class BotParser(object):
     
     def __init__(self, inputfile, output, metadict):
         self.output = output
+        self.inputfile = inputfile
         self.metadict = metadict
         self.logger = logging.getLogger('brandeis')
         self.case_caption = ('{{{{CaseCaption \n| court = United States Supreme Court\n| volume = '
@@ -35,10 +36,7 @@ class BotParser(object):
                        ' | year = {year}\n | notes = \n | categories = \n| portal = Supreme Court of '
                        'the United States\n}}}}')
         self.months = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
-        with open(inputfile, 'r', encoding='utf-8') as in_file:
-            content = in_file.read()
-        with open(self.output, 'w', encoding='utf-8') as outputfile:
-            outputfile.write(content)
+        self.pagelist = ['']
         
     def add_templates(self):
         '''Add templates to the top of the syllabus page.'''
@@ -80,64 +78,72 @@ class BotParser(object):
             max_footnote = self.metadict['max_footnote']
             self.logger.warning("Added footnotes to the text. ({0} sections: {1})."
                                 .format(len(max_footnote), str(max_footnote)))
-            for sect in range(1, len(max_footnote)+1):
-                with open(self.output, 'r', encoding='utf-8') as inputfile:
-                    content = inputfile.read()
-                section = '' if sect == 1 else str(sect) + '/'
-                footnote_start = content.find('Footnote ' + section + '1')
-                content = [content[:footnote_start], content[footnote_start:]]
-                text = content[0]
-                footnotes = content[1]
-                footnotes = footnotes.split('\n\n')
-                foot_no = 1
-                ind = 0
-                foot_text = ''
-                footnote_texts = []
-                while ind < len(footnotes) and foot_no <= int(max_footnote[str(sect)]):
-                    if footnotes[ind] == 'Footnote ' + section + str(foot_no):
-                        ind += 1
-                        # Only allow the last footnote to be one line long. This will more likely
-                        # than not clip the final footnote, but there's really no way for the
-                        # parser to know where the last footnote ends and where the main text
-                        # resumes.
-                        if foot_no == max_footnote[str(sect)]:
-                            foot_text += footnotes[ind]
-                            ind += 1
-                        else:
-                            while ind < len(footnotes) and footnotes[ind] != ('Footnote ' +
-                                                                              section +
-                                                                              str(foot_no + 1)):
-                                if foot_text != '':
-                                    foot_text += '\n\n'
-                                foot_text += footnotes[ind]
-                                ind += 1
-                        footnote_texts.append(foot_text)
+            sect = 1
+            for sect in range(1,len(max_footnote)+1):
+                for i in range(len(self.pagelist)):
+                    section = '' if sect == 1 else str(sect) + '/'
+                    footnote_start = self.pagelist[i].find('Footnote ' + section + '1')
+                    if footnote_start != -1:
+                        content = [self.pagelist[i][:footnote_start], self.pagelist[i][footnote_start:]]
+                        self.pagelist[i] = content[0]
+                        end_ind = content[1].find('{{smallrefs}}')
+                        if end_ind != -1:
+                            footnotes = content[1][:end_ind]
+                            self.pagelist[i] += content[1][end_ind:]
+                        footnotes = footnotes.split('\n\n')
+                        foot_no = 1
+                        ind = 0
                         foot_text = ''
-                        foot_no += 1
-                    else:
-                        raise MissingFootnote( foot_no )
-                trailing = '\n\n'.join(footnotes[ind:])
-                  
-                end_footnote = '</ref>'
-                for i in range(1,int(max_footnote[str(sect)])+1):
-                    split = []
-                    current_footnote = '<ref name="ref{}">'.format(section + str(i))
-                    x = text.find(current_footnote)
-                    if x == -1:
-                        self.logger.warning("Unable to find an in-text tag for footnote #" +
-                                            section + str(i) + ". It has been omitted.")
-                        continue
-                    split.append(text[:x-1])
-                    split.append(text[x:x+len(current_footnote)])
-                    split.append(text[x+len(current_footnote):])
-                    footnote_texts[i-1] = ' ' if footnote_texts[i-1] == '' else footnote_texts[i-1]
-                    text = split[0] + split[1] + footnote_texts[i-1] + split[2]
-              
-                with open(self.output, 'w', encoding='utf-8') as output:
-                    output.write(text + trailing)
-                    
-            with open(self.output, 'a', encoding='utf-8') as output:
-                output.write('{{smallrefs}}\n')
+                        footnote_texts = []
+                        while ind < len(footnotes) and foot_no <= int(max_footnote[str(sect)]):
+                            if footnotes[ind] == 'Footnote ' + section + str(foot_no):
+                                ind += 1
+                                # Only allow the last footnote to be one line long. This will more likely
+                                # than not clip the final footnote, but there's really no way for the
+                                # parser to know where the last footnote ends and where the main text
+                                # resumes.
+                                if foot_no == max_footnote[str(sect)]:
+                                    foot_text += footnotes[ind]
+                                    ind += 1
+                                else:
+                                    while ind < len(footnotes) and footnotes[ind] != ('Footnote ' +
+                                                                                      section +
+                                                                                      str(foot_no + 1)):
+                                        if foot_text != '':
+                                            foot_text += '\n\n'
+                                        foot_text += footnotes[ind]
+                                        ind += 1
+                                footnote_texts.append(foot_text)
+                                foot_text = ''
+                                foot_no += 1
+                            else:
+                                raise MissingFootnote( foot_no )
+                          
+                        end_footnote = '</ref>'
+                        for j in range(1,int(max_footnote[str(sect)])+1):
+                            split = []
+                            current_footnote = '<ref name="ref{}">'.format(section + str(j))
+                            x = -1
+                            page_num = 0
+                            while x == -1 and page_num < len(self.pagelist):
+                                x = self.pagelist[page_num].find(current_footnote)
+                                if x != -1:
+                                    break
+                                page_num += 1
+                            if x == -1:
+                                self.logger.warning("Unable to find an in-text tag for footnote #" +
+                                                    section + str(j) + ". It has been omitted.")
+                                continue
+                            else:
+                                print(page_num, current_footnote, footnote_texts[j-1])
+                                split.append(self.pagelist[page_num][:x-1])
+                                split.append(self.pagelist[page_num][x:x+len(current_footnote)])
+                                split.append(self.pagelist[page_num][x+len(current_footnote):])
+                                footnote_texts[j-1] = ' ' if footnote_texts[j-1] == '' else footnote_texts[j-1]
+                                self.pagelist[page_num] = split[0] + split[1] + footnote_texts[j-1] + split[2]
+                      
+        with open(self.output, 'w', encoding='utf-8') as output:
+            output.write('\n'.join(self.pagelist))
                 
     def headers(self):
         with open(self.output, 'r', encoding='utf-8') as inputfile:
@@ -214,51 +220,55 @@ class BotParser(object):
         self.metadict['sections']['dissent_justices'] = []
         self.metadict['sections']['concurrence'] = []
         self.metadict['sections']['dissent'] = []
-        with open(self.output, 'r', encoding='utf-8') as inputfile:
+        with open(self.inputfile, 'r', encoding='utf-8') as inputfile:
             content = inputfile.read()
         paras = content.split('\n\n')
-        with open(self.output, 'w', encoding='utf-8') as output:
-            for i in range(len(paras)):
-                if len(paras[i]) < 400:
-                    if 'syllabus' in paras[i].lower():
-                        if 'syllabus' not in self.metadict['sections']:
-                            output.write('SYLLABUS' + '-'*80 + '\n\n')
-                            self.metadict['sections']['syllabus'] = i
-                    elif re.search(r',\sconcurring(\.|\Z)', paras[i], re.IGNORECASE):
-                        sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sconcurring(\.|\Z)',
-                                               paras[i], re.IGNORECASE)
-                        if sentence_m:
-                            sentence = sentence_m.group('justices')
-                            justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
-                            justice = justices.group('justice')
-                            if not justice in self.metadict['sections']['concurrence_justices']:
-                                output.write('CONCURRENCE' + '-'*80 + justice + '\n\n')
-                                self.metadict['sections']['concurrence_justices'].append(justice)
-                                self.metadict['sections']['concurrence'].append(i)
-                    elif re.search(r',\sdissenting(\.|\Z)', paras[i], re.IGNORECASE):
-                        sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sdissenting(\.|\Z)',
-                                               paras[i], re.IGNORECASE)
-                        if sentence_m:
-                            sentence = sentence_m.group('justices')
-                            justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
-                            justice = justices.group('justice')
-                            if not justice in self.metadict['sections']['dissent_justices']:
-                                output.write('DISSENT' + '-'*80 + justice + '\n\n')
-                                self.metadict['sections']['dissent_justices'].append(justice)
-                                self.metadict['sections']['dissent'].append(i)
-                    elif 'per curiam' in paras[i].lower():
-                        if 'per curiam' not in self.metadict['sections']:
-                            output.write('PER CURIAM' + '-'*80 + '\n\n')
-                            self.metadict['sections']['per curiam'] = i
-                    elif 'delivered the opinion' in paras[i].lower():
-                        if 'opinion' not in self.metadict['sections']:
-                            output.write('OPINION' + '-'*80 + '\n\n')
-                            self.metadict['sections']['opinion'] = i
-                    output.write(paras[i])
-                else:
-                    output.write(paras[i])
-                output.write("\n\n")
-                
+        for i in range(len(paras)):
+            ind = 0 if len(self.pagelist) == 1 and self.pagelist[0] == '' else -1
+            if len(paras[i]) < 400:
+                if 'syllabus' in paras[i].lower():
+                    if 'syllabus' not in self.metadict['sections']:
+                        self.metadict['sections']['syllabus'] = i
+                elif re.search(r',\sconcurring(\.|\Z)', paras[i], re.IGNORECASE):
+                    sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sconcurring(\.|\Z)',
+                                           paras[i], re.IGNORECASE)
+                    if sentence_m:
+                        sentence = sentence_m.group('justices')
+                        justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
+                        justice = justices.group('justice')
+                        if not justice in self.metadict['sections']['concurrence_justices']:
+                            self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                            self.pagelist.append("\n{{-start-}}\n'''" + self.metadict['title'] + "/Concurrence " + justice + "'''\n")
+                            self.metadict['sections']['concurrence_justices'].append(justice)
+                            self.metadict['sections']['concurrence'].append(i)
+                elif re.search(r',\sdissenting(\.|\Z)', paras[i], re.IGNORECASE):
+                    sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sdissenting(\.|\Z)',
+                                           paras[i], re.IGNORECASE)
+                    if sentence_m:
+                        sentence = sentence_m.group('justices')
+                        justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
+                        justice = justices.group('justice')
+                        if not justice in self.metadict['sections']['dissent_justices']:
+                            self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                            self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] + "/Dissent " + justice + "'''\n")
+                            self.metadict['sections']['dissent_justices'].append(justice)
+                            self.metadict['sections']['dissent'].append(i)
+                elif 'per curiam' in paras[i].lower():
+                    if 'per curiam' not in self.metadict['sections']:
+                        self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                        self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] + "/Per Curiam'''\n")
+                        self.metadict['sections']['per curiam'] = i
+                elif 'delivered the opinion' in paras[i].lower():
+                    if 'opinion' not in self.metadict['sections']:
+                        self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                        self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] + "/Opinion'''\n")
+                        self.metadict['sections']['opinion'] = i
+                self.pagelist[ind] += (paras[i] + '\n\n')
+            else:
+                self.pagelist[ind] += (paras[i] + '\n\n')
+        self.pagelist[0] = '{{-start-}}\n'+ self.pagelist[0]
+        self.pagelist[-1] += '\n{{smallrefs}}\n{{-stop-}}'
+        
         # Create useful warning messages to help the assistant
         self.logger.warning("Sections: ")
         for key in self.metadict['sections']:
@@ -271,27 +281,3 @@ class BotParser(object):
                 self.logger.warning("\t" + key + ": " + str(len(value)))
             else:
                 self.logger.warning("\tNo " + key + ".")
-                
-    def split_pages(self):
-        '''Split pages for pywikipediabot.'''
-        with open (self.output, 'r', encoding='utf-8') as file:
-            content = file.read()
-        split = re.split(r'((?:\n{0,2})[A-Z ]+[-]{80}(?:[A-Za-z]+)?(?:\n{0,2}))', content)
-        for i in range (len(split)):
-            divider = re.match(r'\n{0,2}(?P<section>[A-Za-z ]+)[-]{80}(?P<justice>[A-Za-z]+)?\n{0,2}', split[i])
-            if divider:
-                section_name = divider.group('section')
-                if section_name == 'SYLLABUS':
-                    split[i] = '\n\n'
-                else:
-                    if section_name == 'DISSENT' or section_name == 'CONCURRENCE':
-                        justice = divider.group('justice')
-                        if justice == None:
-                            self.logger.warning("Missing justice name for " + section_name + ".")
-                            justice = ''
-                    else:
-                        justice = ''
-                    split[i] = ("\n{{-stop-}}\n{{-start-}}\n'''" + self.metadict['title'] + "/" +
-                                section_name.title() + " " + justice + "'''\n")
-        with open (self.output, 'w', encoding='utf-8') as output:
-            output.write("{{-start-}}\n'''" + self.metadict['title'] + "'''\n" + ''.join(split) + "\n{{-stop-}}")
