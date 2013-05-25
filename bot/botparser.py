@@ -45,7 +45,11 @@ class BotParser(object):
         self.pages()
         self.move_pages()
         self.add_templates()
-        self.headers()
+        try:
+            self.headers()
+        except IndexError:
+            self.logger.warning("Unable to add any headers.")
+        self.ussc_case()
         self.clean_spaces()
         with open(self.output, 'w', encoding="utf-8") as output:
             output.write('\n'.join(self.pagelist))
@@ -80,9 +84,11 @@ class BotParser(object):
         self.pagelist[0] = new
         
     def clean_spaces(self):
-        '''Clean any excessive newlines that may have been introduced. Groups of newlines with more
-        than two in a row are replaced by two newlines.'''
+        '''Clean any excessive newlines or spaces that may have been introduced. Groups of newlines
+        with more than two in a row are replaced by two newlines. Groups of two or more spaces are
+        replaced with one.'''
         for i in range(len(self.pagelist)):
+            self.pagelist[i] = re.sub(r'[ ]{2,}', ' ', self.pagelist[i])
             self.pagelist[i] = re.sub(r'\n{3,}', '\n\n', self.pagelist[i])
         
     def footnotes(self):
@@ -303,3 +309,29 @@ class BotParser(object):
                 self.logger.warning("\t" + key + ": " + str(len(value)))
             else:
                 self.logger.warning("\tNo " + key + ".")
+                
+    def ussc_case(self):
+        template = '{{USSCcase\n|percuriam = '
+        if 'per curiam' in self.metadict['sections']:
+            template += 'yes\n'
+        else:
+            template += 'no\n'
+        try:
+            for i in range(len(self.metadict['sections']['concurrence_justices'])):
+                template += ('|concurrence_author' + str(i+1) + ' = ' + 
+                             self.metadict['sections']['concurrence_justices'][i]) + '\n'
+            if i > 8:
+                self.logger.warning("Too many concurrence authors in {{USSCcase}}.")
+        except KeyError:
+            pass
+        try:
+            for i in range(len(self.metadict['sections']['dissent_justices'])):
+                template += ('|dissent_author' + str(i+1) + ' = ' + 
+                             self.metadict['sections']['dissent_justices'][i]) + '\n'
+            if i > 4:
+                self.logger.warning("Too many dissent authors in {{USSCcase}}.")
+        except KeyError:
+            pass
+        template += "|linked_cases =\n|wikipedia = no\n}}"
+        split = re.split(r'(\{{2}CaseCaption(.|\n)*?\}{2}\n)', self.pagelist[0])
+        self.pagelist[0] = split[0] + split[1] + template + ''.join(split[2:])

@@ -180,7 +180,7 @@ class Parser(object):
     def html_entity(self):
         if self.value == "quot":
             self.value = '"'
-        elif self.value == "sect":
+        elif self.value == "sect" or self.value == "#167":
             self.value = '§'
         elif self.value == "amp":
             self.value = '&'
@@ -213,7 +213,7 @@ class Parser(object):
         return self.value
     
     def ordered(self):
-        self.value = "\n\n{{right|''It is so ordered.''}}\n\n"
+        self.value = "\n\n{{right|''" + self.value + "''}}\n\n"
         return self.value
     
     def smallcaps(self):
@@ -239,18 +239,16 @@ class Parser(object):
         return self.value
     
     def number(self):
-        return self.value
+        pass
     
     def multi_apostrophes(self):
         '''If multiple apostrophes appear in the text (as they do, occasionally, due to bad OCR), 
         escape them with <nowiki></nowiki> to avoid borking the italics/bold'''
         self.value = "<nowiki>" + self.value + "</nowiki>"
-        return self.value
         
     def asterisks(self):
         # For the three-asterisks-in-a-row thing that has no good name
         self.value = '{{***}}'
-        return self.value
     
     def punctuation(self):
         if self.value == "'":
@@ -259,7 +257,10 @@ class Parser(object):
         elif self.value == "*":
             # Prevent bullet points
             self.value = "<nowiki>*</nowiki>"
-        return self.value
+            self.logger.warning("Asterisks found in text. Check for more references.")
+    
+    def unknown(self):
+        self.value = ''
     
 def strip_extraneous(content):
     '''Much of the HTML in the page is not useful -- this removes most everything but the case

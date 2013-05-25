@@ -93,18 +93,21 @@ for file in files:
     get_metadata(metadict, file)
     
     # Skip if the file exists on Wikisource already
-#    try:
-#        line = api.get_case_line(metadict['title'], metadict['volume'], metadict['page'])
-#    except NoCaseInList as e:
-#        logger.info(e.value + " File will be skipped.")
-#        continue
-#    except MultipleCases as e:
-#        logger.error(e.value + " File will be skipped.")
-#        continue
-#    else:
-#        if api.case_exists(line):
-#            logger.info(metadict['title'] + " exists on Wikisource. File will be skipped.")
-#            continue
+    try:
+        line = api.get_case_line(metadict['title'], metadict['volume'], metadict['page'])
+    except NoCaseInList as e:
+        choice = input(e.value + ' Continue? (y/n)')
+        if choice == 'n' or choice == "N":
+            continue
+    except MultipleCases as e:
+        choice = input(e.value + ' Continue? (y/n)')
+        if choice == 'n' or choice == "N":
+            continue
+    else:
+        if api.case_exists(line):
+            choice = input('This file exists on Wikisource. Continue? (y/n)')
+            if choice == 'n' or choice == "N":
+                continue
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
     logger.info("Parsing {0}.".format(metadict['title']))

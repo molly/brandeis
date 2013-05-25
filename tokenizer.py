@@ -52,6 +52,7 @@ class Tokenizer(object):
               'MULTI_APOSTROPHES',  # For '', ''' in the text
               'ASTERISKS',          # ***
               'PUNCTUATION',
+              'UNKNOWN',            # For unknown characters that should be skipped
               )
 
 #===================================================================================================
@@ -75,7 +76,7 @@ class Tokenizer(object):
         return token
         
     def t_IGNORED_TAG(self, token):
-        r'<\/?(?P<tag>div|DIV|span|SPAN|hr|HR)(.*?)>'
+        r'<\/?(?P<tag>div|DIV|span|SPAN|hr|HR|L\=)(.*?)>'
         token.value = token.lexer.lexmatch.group('tag')
         return token
     
@@ -104,7 +105,8 @@ class Tokenizer(object):
         return token
     
     def t_ORDERED(self, token):
-        r'<p>It\sis\sso\sordered\.<\/p>'
+        r'<p>(<em>)?(?P<ordered>(?:It\sis\s)?[sS]o\sordered\.)(<\/em>)?<\/p>'
+        token.value = token.lexer.lexmatch.group('ordered')
         return token
     
     def t_blockquote_B_PARAGRAPH(self, token):
@@ -132,7 +134,7 @@ class Tokenizer(object):
         return token
     
     def t_HTML_ENTITY(self, token):
-        r'&(?P<entity>[a-zA-Z]+|\#[0-9]{4});'
+        r'&(?P<entity>[a-zA-Z]+|\#[0-9]{3,4});'
         token.value = token.lexer.lexmatch.group('entity')
         return token
     
@@ -183,6 +185,10 @@ class Tokenizer(object):
     
     def t_PUNCTUATION(self, token):
         r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?~°–—/]"""
+        return token
+    
+    def t_UNKNOWN(self, token):
+        r'�'
         return token
     
 #===============================================================================
