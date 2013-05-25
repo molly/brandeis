@@ -283,13 +283,13 @@ class BotParser(object):
                     if 'per curiam' not in self.metadict['sections']:
                         self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
                         self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
-                                             "/Per Curiam'''\n")
+                                             "/Opinion of the Court'''\n")
                         self.metadict['sections']['per curiam'] = i
                 elif 'delivered the opinion' in paras[i].lower():
                     if 'opinion' not in self.metadict['sections']:
                         self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
                         self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
-                                             "/Opinion'''\n")
+                                             "/Opinion of the Court'''\n")
                         self.metadict['sections']['opinion'] = i
                 self.pagelist[ind] += (paras[i] + '\n\n')
             else:
@@ -311,27 +311,34 @@ class BotParser(object):
                 self.logger.warning("\tNo " + key + ".")
                 
     def ussc_case(self):
-        template = '{{USSCcase\n|percuriam = '
-        if 'per curiam' in self.metadict['sections']:
-            template += 'yes\n'
-        else:
-            template += 'no\n'
-        try:
-            for i in range(len(self.metadict['sections']['concurrence_justices'])):
-                template += ('|concurrence_author' + str(i+1) + ' = ' + 
-                             self.metadict['sections']['concurrence_justices'][i]) + '\n'
-            if i > 8:
-                self.logger.warning("Too many concurrence authors in {{USSCcase}}.")
-        except KeyError:
-            pass
-        try:
-            for i in range(len(self.metadict['sections']['dissent_justices'])):
-                template += ('|dissent_author' + str(i+1) + ' = ' + 
-                             self.metadict['sections']['dissent_justices'][i]) + '\n'
-            if i > 4:
-                self.logger.warning("Too many dissent authors in {{USSCcase}}.")
-        except KeyError:
-            pass
-        template += "|linked_cases =\n|wikipedia = no\n}}"
-        split = re.split(r'(\{{2}CaseCaption(.|\n)*?\}{2}\n)', self.pagelist[0])
-        self.pagelist[0] = split[0] + split[1] + template + ''.join(split[2:])
+        for page in range(len(self.pagelist)-4):
+            if page == 0:
+                template = '\n{{USSCcase\n|percuriam = '
+            else:
+                template = '\n{{USSCcase2\n|percuriam = '
+            if 'per curiam' in self.metadict['sections']:
+                template += 'yes\n'
+            else:
+                template += 'no\n'
+            try:
+                for i in range(len(self.metadict['sections']['concurrence_justices'])):
+                    template += ('|concurrence_author' + str(i+1) + ' = ' + 
+                                 self.metadict['sections']['concurrence_justices'][i]) + '\n'
+                if i > 8:
+                    self.logger.warning("Too many concurrence authors in {{USSCcase}}.")
+            except KeyError:
+                pass
+            try:
+                for i in range(len(self.metadict['sections']['dissent_justices'])):
+                    template += ('|dissent_author' + str(i+1) + ' = ' + 
+                                 self.metadict['sections']['dissent_justices'][i]) + '\n'
+                if i > 4:
+                    self.logger.warning("Too many dissent authors in {{USSCcase}}.")
+            except KeyError:
+                pass
+            template += "|linked_cases =\n|wikipedia = no\n}}\n"
+            if page == 0:
+                s = re.split(r'(\{{2}CaseCaption(?:.|\n)*?\}{2})', self.pagelist[page])
+            else:
+                s = re.split(r'(\{{2}header(?:.|\n)*?[^A-Z]\}{2})', self.pagelist[page])
+            self.pagelist[page] = s[0] + s[1] + template + s[2]
