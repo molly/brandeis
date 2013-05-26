@@ -125,7 +125,7 @@ for file in files:
             logger.info(e.value + " Continuing.")
     else:
         if api.case_exists(line):
-            choice = input('This file exists on Wikisource. Continue? (y/n)')
+            choice = input(metadict['title'] + 'exists on Wikisource. Continue? (y/n)')
             if choice == 'n' or choice == "N":
                 logger.info(metadict['title'] + " exists on Wikisource. Skipping.")
                 continue

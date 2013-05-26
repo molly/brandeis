@@ -125,6 +125,9 @@ class Parser(object):
                 m_href = re.search(r'href\="(?P<href>.*?)"', info)
                 href = m_href.group('href')
                 self.metadict['pdf'] = href
+            elif link_class == "appeallink":
+                self.value = text
+                return self.value
         else:
             m_href = re.search(r'''href\=["'](?P<href>.*?)["']''', info)
             if m_href:
@@ -154,7 +157,7 @@ class Parser(object):
                                 self.metadict['max_footnote']['1'] = int(footnote.group('number1'))
                                 self.value = 'Footnote {}'.format(footnote.group('number1'))
                             return self.value
-        self.value = text
+        self.value = ''
         return self.value
         
     def comment(self):
@@ -214,6 +217,9 @@ class Parser(object):
     
     def ordered(self):
         self.value = "\n\n{{right|''" + self.value + "''}}\n\n"
+        return self.value
+    
+    def abbr(self):
         return self.value
     
     def smallcaps(self):

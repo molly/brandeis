@@ -45,6 +45,7 @@ class Tokenizer(object):
               'BOLD',               # <b>
               'B_NEWLINE',          # Newline in blockquote state
               'NEWLINE',            # Newline
+              'ABBR',               # Abbreviations that shouldn't become small caps
               'SMALLCAPS',          # ALL CAPS WORDS
               'ORDERED',            # "It is so ordered."
               'WORD',
@@ -157,6 +158,10 @@ class Tokenizer(object):
     
     def t_NEWLINE(self, token):
         r'(<[Bb][Rr]\s?\/?>)'
+        return token
+    
+    def t_ABBR(self, token):
+        r'(?<![A-Z]\s)[A-Z]{1,5}(?!\s[A-Z])'
         return token
     
     def t_SMALLCAPS(self, token):

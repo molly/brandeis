@@ -66,11 +66,11 @@ class BotParser(object):
         if case_number:
             self.metadict['case_number'] = case_number.group('no')
         argued = re.search(r'(?:Argued|Submitted)\s(?P<date>' + self.months +
-                           r'\s\d{1,2}(?:-\d{1,2})?,\s\d{4})', top)
+                           r'\s?\d{1,2}(?:-\d{1,2})?,\s?\d{4})', top)
         if argued:
             self.metadict['argued'] = argued.group('date')
         decided = re.search(r'Decided\s(?P<date>' + self.months +
-                            r'\s\d{1,2}(?:-\d{1,2})?,\s\d{4})', top)
+                            r'\s?\d{1,2}(?:-\d{1,2})?,\s?\d{4})', top)
         if decided:
             self.metadict['decided'] = decided.group('date')
         for parameter in parameters:
@@ -336,13 +336,13 @@ class BotParser(object):
                          + ' Justia]\n')
             talkpage += "|contributors = [[User:BrandeisBot]]\n"
             talkpage += "|progress = Text being edited [[Image:25%.png]]\n"
-            talkpage += ("|notes = Text gathered and wikified using the an automated tool. See " +
+            talkpage += ("|notes = Text gathered and wikified using an automated tool. See " +
                          "[[User:BrandeisBot/Documentation]] for more information.\n")
             talkpage += "|proofreaders = \n}}\n{{-stop-}}"
             self.pagelist.append(talkpage)
                 
     def ussc_case(self):
-        for page in range(len(self.pagelist)-4):
+        for page in range(len(self.pagelist)):
             if page == 0:
                 template = '\n{{USSCcase\n|percuriam = '
             else:
@@ -355,16 +355,16 @@ class BotParser(object):
                 for i in range(len(self.metadict['sections']['concurrence_justices'])):
                     template += ('|concurrence_author' + str(i+1) + ' = ' + 
                                  self.metadict['sections']['concurrence_justices'][i]) + '\n'
-                if i > 8:
-                    self.logger.warning("Too many concurrence authors in {{USSCcase}}.")
+                    if i > 8:
+                        self.logger.warning("Too many concurrence authors in {{USSCcase}}.")
             except KeyError:
                 pass
             try:
                 for i in range(len(self.metadict['sections']['dissent_justices'])):
                     template += ('|dissent_author' + str(i+1) + ' = ' + 
                                  self.metadict['sections']['dissent_justices'][i]) + '\n'
-                if i > 4:
-                    self.logger.warning("Too many dissent authors in {{USSCcase}}.")
+                    if i > 4:
+                        self.logger.warning("Too many dissent authors in {{USSCcase}}.")
             except KeyError:
                 pass
             template += "|linked_cases =\n|wikipedia = no\n}}\n"
