@@ -39,13 +39,14 @@ class BotParser(object):
         self.pagelist = ['']
         
     def prepare(self):
-        '''Prepare file so the bot can upload it.'''
+        '''Perform the parsing functions. Note the order of some of these functions is important.'''
         self.sectionize()
         self.footnotes()
         self.pages()
         self.move_pages()
         self.add_templates()
         self.headers()
+        self.clean_spaces()
         with open(self.output, 'w', encoding="utf-8") as output:
             output.write('\n'.join(self.pagelist))
         
@@ -77,6 +78,12 @@ class BotParser(object):
         new += '\n' + self.case_caption.format(**self.metadict)
         new += self.pagelist[0][rest.start():]
         self.pagelist[0] = new
+        
+    def clean_spaces(self):
+        '''Clean any excessive newlines that may have been introduced. Groups of newlines with more
+        than two in a row are replaced by two newlines.'''
+        for i in range(len(self.pagelist)):
+            self.pagelist[i] = re.sub(r'\n{3,}', '\n\n', self.pagelist[i])
         
     def footnotes(self):
         '''Parse out footnotes into <ref></ref> tags. It does what it can, but it's highly
@@ -149,6 +156,7 @@ class BotParser(object):
                                 self.pagelist[page_num] = split[0] + split[1] + footnote_texts[j-1] + split[2]
                 
     def headers(self):
+        '''Add the {{header}} template to the beginning of each page.'''
         content = ''.join(self.pagelist)
         split = re.split(r"(\{{2}\-start\-\}{2}\n(?:'''.*?'''\n|<div.*?\n))", content)
         sections = []
@@ -201,7 +209,7 @@ class BotParser(object):
             match = re.search(r'(?P<page>\{{2}page\sbreak\|\d+\|left\}{2})(\s|\n)*\{{2}smallrefs',
                               self.pagelist[i])
             if match:
-                self.pagelist[i].replace(match.group('page'), '')
+                self.pagelist[i] = self.pagelist[i].replace(match.group('page'), '')
                 split = re.split(r"(\{{2}\-start\-\}{2}\n+'{3}.*?'{3}\n)",self.pagelist[i+1])
                 self.pagelist[i+1] = (split[0] + split[1] + '\n' + match.group('page') + '\n' +
                                       split[2])
