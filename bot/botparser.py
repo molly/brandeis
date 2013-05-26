@@ -51,6 +51,7 @@ class BotParser(object):
             self.logger.warning("Unable to add any headers.")
         self.ussc_case()
         self.clean_spaces()
+        self.talk_pages()
         with open(self.output, 'w', encoding="utf-8") as output:
             output.write('\n'.join(self.pagelist))
         
@@ -203,7 +204,7 @@ class BotParser(object):
                                   self.pagelist[page_num], re.DOTALL)
             try:
                 ind = page_split[2].find('\n{{-stop-}}')
-                page_split[2] = page_split[2][:ind] + '\n</div>' + page_split[2][ind:]
+                page_split[2] = page_split[2][:ind] + '\n</div>\n{{PD-USGov}}\n' + page_split[2][ind:]
                 self.pagelist[page_num] = page_split[0] + page_split[1] + '<div class="indented-page">\n' + header + page_split[2]
             except IndexError:
                 self.logger.warning("Unable to add a header for page " + str(page_num) + ".")
@@ -309,6 +310,26 @@ class BotParser(object):
                 self.logger.warning("\t" + key + ": " + str(len(value)))
             else:
                 self.logger.warning("\tNo " + key + ".")
+                
+    def talk_pages(self):
+        temp = self.pagelist
+        self.pagelist = []
+        for i in range(len(temp)):
+            self.pagelist.append(temp[i])
+            title_match = re.search(r"\{{2}-start-\}{2}\n+'''(?P<title>.*?)'''", temp[i])
+            if not title_match:
+                self.logger.warning('Unable to add a talk page.')
+                continue
+            talkpage = "{{-start-}}\n'''Talk:" + title_match.group('title') + "'''\n{{textinfo\n"
+            talkpage += "|edition = " + self.metadict['full_title'] + '\n'
+            talkpage += ("|source = " + self.metadict['title'] + ' from [' + self.metadict['source']
+                         + ' Justia]\n')
+            talkpage += "|contributors = [[User:BrandeisBot]]\n"
+            talkpage += "|progress = Text being edited [[Image:25%.png]]\n"
+            talkpage += ("|notes = Text gathered and wikified using the an automated tool. See " +
+                         "[[User:BrandeisBot/Documentation]] for more information.\n")
+            talkpage += "|proofreaders = \n}}\n{{-stop-}}"
+            self.pagelist.append(talkpage)
                 
     def ussc_case(self):
         for page in range(len(self.pagelist)-4):
