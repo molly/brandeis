@@ -53,6 +53,7 @@ class BotParser(object):
         self.ussc_case()
         self.clean_spaces()
         self.talk_pages()
+        self.redirect()
         with open(self.output, 'w', encoding="utf-8") as output:
             output.write('\n'.join(self.pagelist))
         
@@ -237,7 +238,13 @@ class BotParser(object):
                     split[i+2] = temp[1]
             content = ''.join(split)
             self.pagelist[page_num] = content
-
+            
+    def redirect(self):
+        '''Create redirect page for the case number'''
+        page = "{{-start-}}\n'''" + self.metadict['number'] + "'''\n#REDIRECT [[" + self.metadict['title'] + "]]\n{{-stop-}}"
+        self.pagelist.append(page)
+        self.summary_logger.info("Creating redirect from [[" + self.metadict['number'] + "]] to [[" + self.metadict['title'] + "]].")
+        
     def sectionize(self):
         '''Attempt to parse out any changes in section. Again, this is highly dependent on the input
         file and needs to be double-checked.'''
