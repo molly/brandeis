@@ -154,7 +154,7 @@ class Parser(object):
                                 self.metadict['max_footnote']['1'] = int(footnote.group('number1'))
                                 self.value = 'Footnote {}'.format(footnote.group('number1'))
                             return self.value
-        self.value = ''
+        self.value = text
         return self.value
         
     def comment(self):

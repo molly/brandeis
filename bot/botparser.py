@@ -45,7 +45,7 @@ class BotParser(object):
         self.footnotes()
         self.pages()
         self.move_pages()
-        self.add_templates()
+        self.add_case_caption()
         try:
             self.headers()
         except IndexError:
@@ -56,20 +56,20 @@ class BotParser(object):
         with open(self.output, 'w', encoding="utf-8") as output:
             output.write('\n'.join(self.pagelist))
         
-    def add_templates(self):
-        '''Add templates to the top of the syllabus page.'''
+    def add_case_caption(self):
+        '''Add {{CaseCaption}} to the syllabus page.'''
         top = self.pagelist[0][:500] if len(self.pagelist[0]) >= 500 else self.pagelist[0]
         parameters = ['volume', 'page', 'petitioner', 'respondent', 'argued', 'decided',
                       'case_number']
-        case_number = re.search(r'No\.\s(?P<no>\d+\-\d+)', top)
+        case_number = re.search(r'No\.\s?(?P<no>\d+\-\d+)', top)
         if case_number:
             self.metadict['case_number'] = case_number.group('no')
         argued = re.search(r'(?:Argued|Submitted)\s(?P<date>' + self.months +
-                           r'\s\d{1,2},\s\d{4})', top)
+                           r'\s\d{1,2}(?:-\d{1,2})?,\s\d{4})', top)
         if argued:
             self.metadict['argued'] = argued.group('date')
         decided = re.search(r'Decided\s(?P<date>' + self.months +
-                            r'\s\d{1,2},\s\d{4})', top)
+                            r'\s\d{1,2}(?:-\d{1,2})?,\s\d{4})', top)
         if decided:
             self.metadict['decided'] = decided.group('date')
         for parameter in parameters:
@@ -80,7 +80,7 @@ class BotParser(object):
                 
         ind = self.pagelist[0].find('{{-start-}}')
         new = self.pagelist[0][:ind+11] + "\n'''" + self.metadict['title'] + "'''\n"
-        rest = re.search(r'\n\n([^\n]{70,})', self.pagelist[0])
+        rest = re.search(r'\n\n([^\n]{100,})', self.pagelist[0])
         new += '\n' + self.case_caption.format(**self.metadict)
         new += self.pagelist[0][rest.start():]
         self.pagelist[0] = new

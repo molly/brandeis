@@ -20,6 +20,7 @@
 
 import argparse, logging, os, re, sys
 from time import strftime, gmtime
+from random import choice
 from bexceptions import *
 from validator import Validator
 from caseparser import Parser, get_metadata, strip_extraneous
@@ -39,8 +40,8 @@ logger.setLevel(logging.DEBUG)
 summary_logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(message)s')
 console = logging.StreamHandler()
-report = logging.FileHandler("logs/report" + strftime("%H%M%S_%d%m%Y", gmtime()), encoding='utf-8')
-summary = logging.FileHandler("logs/summary" + strftime("%H%M%S_%d%m%Y", gmtime()), encoding='utf-8')
+report = logging.FileHandler("logs/report" + strftime("%H:%M:%S_%d-%m-%Y", gmtime()), encoding='utf-8')
+summary = logging.FileHandler("logs/summary" + strftime("%H:%M:%S_%d-%m-%Y", gmtime()), encoding='utf-8')
 console.setFormatter(formatter)
 report.setFormatter(formatter)
 summary.setFormatter(formatter)
@@ -89,8 +90,8 @@ for file in files:
         content = strip_extraneous(raw)
         
     if content:
-         with open(file, 'w', encoding='utf-8') as html:
-             html.write(content)
+        with open(file, 'w', encoding='utf-8') as html:
+            html.write(content)
     
     # Validate the file. Files that do not pass validation are skipped without interrupting the rest
     # of the process.
