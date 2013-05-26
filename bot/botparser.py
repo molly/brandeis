@@ -27,6 +27,7 @@ class BotParser(object):
         self.inputfile = inputfile
         self.metadict = metadict
         self.logger = logging.getLogger('brandeis')
+        self.summary_logger = logging.getLogger('summary')
         self.case_caption = ('{{{{CaseCaption \n| court = United States Supreme Court\n| volume = '
                              '{volume}\n| reporter = U.S.\n| page = {page}\n| party1 = {petitioner}'
                              '\n| party2 = {respondent}\n| lowercourt = \n| argued = {argued} \n| '
@@ -189,7 +190,7 @@ class BotParser(object):
                 header = self.header.format(section=sections[page_num], previous='', next='[[' +
                                             sections[page_num+1] + ']]', year=self.metadict['date'])
             elif page_num == 1:
-                header = self.header.format(section=sections[page_num], previous='[[/|Syllabus]]',
+                header = self.header.format(section=sections[page_num], previous='[[{{subst:BASEPAGENAME}}|Syllabus]]',
                                             next='[[' + sections[page_num+1] + ']]',
                                             year=self.metadict['date'])
             elif page_num == len(sections)-1:
@@ -204,7 +205,7 @@ class BotParser(object):
                                   self.pagelist[page_num], re.DOTALL)
             try:
                 ind = page_split[2].find('\n{{-stop-}}')
-                page_split[2] = page_split[2][:ind] + '\n</div>\n{{PD-USGov}}\n' + page_split[2][ind:]
+                page_split[2] = page_split[2][:ind] + '\n</div>\n{{PD-USGov}}' + page_split[2][ind:]
                 self.pagelist[page_num] = page_split[0] + page_split[1] + '<div class="indented-page">\n' + header + page_split[2]
             except IndexError:
                 self.logger.warning("Unable to add a header for page " + str(page_num) + ".")
@@ -320,6 +321,8 @@ class BotParser(object):
             if not title_match:
                 self.logger.warning('Unable to add a talk page.')
                 continue
+            self.summary_logger.info("Adding page [[" + title_match.group('title') + "]]")
+            self.summary_logger.info("Adding page [[Talk:" + title_match.group('title') + "]]")
             talkpage = "{{-start-}}\n'''Talk:" + title_match.group('title') + "'''\n{{textinfo\n"
             talkpage += "|edition = " + self.metadict['full_title'] + '\n'
             talkpage += ("|source = " + self.metadict['title'] + ' from [' + self.metadict['source']

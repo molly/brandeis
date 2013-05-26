@@ -19,6 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse, logging, os, re, sys
+from time import strftime, gmtime
 from bexceptions import *
 from validator import Validator
 from caseparser import Parser, get_metadata, strip_extraneous
@@ -28,12 +29,25 @@ from postprocessor import Postprocessor
 from bot.core import Bot
 
 # Set up logging
+try:
+    os.mkdir('logs')
+except OSError:
+    pass
 logger = logging.getLogger('brandeis')
+summary_logger = logging.getLogger('summary')
 logger.setLevel(logging.DEBUG)
+summary_logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(message)s')
 console = logging.StreamHandler()
-formatter = logging.Formatter('%(levelname)s - %(message)s')
+report = logging.FileHandler("logs/report" + strftime("%H%M%S_%d%m%Y", gmtime()), encoding='utf-8')
+summary = logging.FileHandler("logs/summary" + strftime("%H%M%S_%d%m%Y", gmtime()), encoding='utf-8')
 console.setFormatter(formatter)
+report.setFormatter(formatter)
+summary.setFormatter(formatter)
 logger.addHandler(console)
+logger.addHandler(report)
+summary_logger.addHandler(summary)
+summary_logger.info('==Bot run: ' + strftime("%d-%m-%Y, %H:%M:%S (UTC)", gmtime()) + '==')
 
 # Command line parser
 parser = argparse.ArgumentParser(description='Convert the text file of a supreme court case '
@@ -98,16 +112,25 @@ for file in files:
     except NoCaseInList as e:
         choice = input(e.value + ' Continue? (y/n)')
         if choice == 'n' or choice == "N":
+            logger.info(e.value + " Skipping.")
             continue
+        else:
+            logger.info(e.value + " Continuing.")
     except MultipleCases as e:
         choice = input(e.value + ' Continue? (y/n)')
         if choice == 'n' or choice == "N":
+            logger.info(e.value + " Skipping.")
             continue
+        else:
+            logger.info(e.value + " Continuing.")
     else:
         if api.case_exists(line):
             choice = input('This file exists on Wikisource. Continue? (y/n)')
             if choice == 'n' or choice == "N":
+                logger.info(metadict['title'] + " exists on Wikisource. Skipping.")
                 continue
+            else:
+                logger.info(metadict['title'] + " exists on Wikisource. Continuing.")
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
     logger.info("Parsing {0}.".format(metadict['title']))
@@ -145,4 +168,6 @@ for file in files:
     bot_filename = out_filename.replace('wikitext', 'botfiles')
     bot = Bot(out_filename, bot_filename, metadict)
     bot.prepare()
+    logger.info('-----')
+    summary_logger.info('\n\n')
          
