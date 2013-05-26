@@ -16,3 +16,9 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+__author__ = "Molly White"
+__copyright__ = "Copyright (c) 2013 Molly White"
+__license__ = "GPLv3"
+__version__ = "0.1"
+__email__ = "molly.white5@gmail.com"

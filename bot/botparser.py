@@ -35,7 +35,7 @@ class BotParser(object):
         self.header = ('{{{{header\n | title = {{{{subst:PAGENAME}}}}\n | author = \n | translator '
                        '= \n | section = {{{{subst:SUBPAGENAME}}}}\n | previous = {previous}\n | next = {next}\n'
                        ' | year = {year}\n | notes = \n | categories = \n | portal = Supreme Court of '
-                       'the United States\n}}}}')
+                       'the United States\n}}}}\n')
         self.months = r'(?:January|February|March|April|May|June|July|August|September|October|November|December)'
         self.pagelist = ['']
         

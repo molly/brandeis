@@ -20,7 +20,6 @@
 
 import argparse, logging, os, re, sys
 from time import strftime, gmtime
-from random import choice
 from bexceptions import *
 from validator import Validator
 from caseparser import Parser, get_metadata, strip_extraneous
