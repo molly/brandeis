@@ -45,7 +45,7 @@ class Tokenizer(object):
               'BOLD',               # <b>
               'B_NEWLINE',          # Newline in blockquote state
               'NEWLINE',            # Newline
-              'ABBR',               # Abbreviations that shouldn't become small caps
+              'ABBR',               # Abbreviations that shouldn't be small caps
               'SMALLCAPS',          # ALL CAPS WORDS
               'ORDERED',            # "It is so ordered."
               'WORD',
@@ -73,7 +73,7 @@ class Tokenizer(object):
 # TOKEN DEFINITIONS
 #===============================================================================
     def t_IGNORED_TAG_CONTENT(self, token):
-        r'<(script|SCRIPT|div\sclass\="disclaimer")(.*?)>.*?<\/(div|script|SCRIPT)>'
+        r'<(script|SCRIPT|div\sclass\="disclaimer"|img)(.*?)>.*?<\/(div|script|SCRIPT|img)>'
         return token
         
     def t_IGNORED_TAG(self, token):
@@ -161,7 +161,7 @@ class Tokenizer(object):
         return token
     
     def t_ABBR(self, token):
-        r'(?<![A-Z]\s)[A-Z]{1,5}(?!\s[A-Z])'
+        r'(?<![A-Z])[A-Z]{1,4}(?![A-Z])'
         return token
     
     def t_SMALLCAPS(self, token):
@@ -189,7 +189,7 @@ class Tokenizer(object):
         return token
     
     def t_PUNCTUATION(self, token):
-        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?~°–—/]"""
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?~°–—/±]"""
         return token
     
     def t_UNKNOWN(self, token):

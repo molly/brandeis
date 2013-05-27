@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from bexceptions import MissingFootnote
-import logging, re
+import logging, re, sys
 
 class BotParser(object):
     
@@ -41,21 +41,25 @@ class BotParser(object):
         
     def prepare(self):
         '''Perform the parsing functions. Note the order of some of these functions is important.'''
-        self.sectionize()
-        self.footnotes()
-        self.pages()
-        self.move_pages()
-        self.add_case_caption()
         try:
-            self.headers()
-        except IndexError:
-            self.logger.warning("Unable to add any headers.")
-        self.ussc_case()
-        self.clean_spaces()
-        self.talk_pages()
-        self.redirect()
-        with open(self.output, 'w', encoding="utf-8") as output:
-            output.write('\n'.join(self.pagelist))
+            self.sectionize()
+            self.footnotes()
+            self.pages()
+            self.move_pages()
+            self.add_case_caption()
+            try:
+                self.headers()
+            except IndexError:
+                self.logger.warning("Unable to add any headers.")
+            self.ussc_case()
+            self.clean_spaces()
+            self.talk_pages()
+            self.redirect()
+        except Exception as e:
+            self.logger.error("Uncaught error. Terminating file write. {}".format(e))
+        else:
+            with open(self.output, 'w', encoding="utf-8") as output:
+                output.write('\n'.join(self.pagelist))
         
     def add_case_caption(self):
         '''Add {{CaseCaption}} to the syllabus page.'''
@@ -176,7 +180,7 @@ class BotParser(object):
                 if match:
                     name = match.group(1)
                     if '/' in name:
-                        section = '/' + name.split('/')[1]
+                        section = '{{subst:BASEPAGENAME}}/' + name.split('/')[1]
                         if 'Dissent' in section:
                             section = section + '|Dissent'
                         elif 'Concurrence' in section:
@@ -228,14 +232,17 @@ class BotParser(object):
         for page_num in range(len(self.pagelist)):
             split = re.split(r'(\n{2}PAGE\s\d+\n{2})', self.pagelist[page_num])
             for i in range(len(split)):
-                if split[i][:6] == '\n\nPAGE':
-                    number_m = re.match(r'\n{2}PAGE\s(?P<number>\d+)\n{2}', split[i])
-                    split[i] = ('\n\n{{page break|' + number_m.group('number') + 
-                                '|left}}\n\n')
-                elif split[i][-1] == '-':
-                    temp = split[i+2].split(' ', 1)
-                    split[i] = split[i][:-1] + temp[0]
-                    split[i+2] = temp[1]
+                try:
+                    if split[i][:6] == '\n\nPAGE':
+                        number_m = re.match(r'\n{2}PAGE\s(?P<number>\d+)\n{2}', split[i])
+                        split[i] = ('\n\n{{page break|' + number_m.group('number') + 
+                                    '|left}}\n\n')
+                    elif split[i][-1] == '-':
+                        temp = split[i+2].split(' ', 1)
+                        split[i] = split[i][:-1] + temp[0]
+                        split[i+2] = temp[1]
+                except:
+                    self.logger.warning("Error when adding {{page break}} templates.")
             content = ''.join(split)
             self.pagelist[page_num] = content
             
@@ -262,32 +269,44 @@ class BotParser(object):
                 if 'syllabus' in paras[i].lower():
                     if 'syllabus' not in self.metadict['sections']:
                         self.metadict['sections']['syllabus'] = i
-                elif re.search(r',\sconcurring(\.|\Z)', paras[i], re.IGNORECASE):
-                    sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sconcurring(\.|\Z)',
+                elif re.search(r',\sconcurring(\sin\sthe\sresult)?(\.|\Z)', paras[i], re.IGNORECASE):
+                    sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sconcurring(\sin\sthe\sresult)?(\.|\Z)',
                                            paras[i], re.IGNORECASE)
                     if sentence_m:
                         sentence = sentence_m.group('justices')
                         justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
-                        justice = justices.group('justice')
-                        if not justice in self.metadict['sections']['concurrence_justices']:
-                            self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
-                            self.pagelist.append("\n{{-start-}}\n'''" + self.metadict['title'] +
-                                                 "/Concurrence " + justice + "'''\n")
-                            self.metadict['sections']['concurrence_justices'].append(justice)
-                            self.metadict['sections']['concurrence'].append(i)
-                elif re.search(r',\sdissenting(\.|\Z)', paras[i], re.IGNORECASE):
-                    sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sdissenting(\.|\Z)',
-                                           paras[i], re.IGNORECASE)
-                    if sentence_m:
-                        sentence = sentence_m.group('justices')
-                        justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
-                        justice = justices.group('justice')
-                        if not justice in self.metadict['sections']['dissent_justices']:
+                        try:
+                            justice = justices.group('justice')
+                            if not justice in self.metadict['sections']['concurrence_justices']:
+                                self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                                self.pagelist.append("\n{{-start-}}\n'''" + self.metadict['title'] +
+                                                     "/Concurrence " + justice + "'''\n")
+                                self.metadict['sections']['concurrence_justices'].append(justice)
+                                self.metadict['sections']['concurrence'].append(i)
+                        except:
+                            self.logger.warning("Unable to identify concurrence justice.")
                             self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
                             self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
-                                                 "/Dissent " + justice + "'''\n")
-                            self.metadict['sections']['dissent_justices'].append(justice)
-                            self.metadict['sections']['dissent'].append(i)
+                                                     "/Dissent'''\n")
+                elif re.search(r',\sdissenting(\sin\sthe\sresult)?(\.|\Z)', paras[i], re.IGNORECASE):
+                    sentence_m = re.search(r'(\.|\A)(?P<justices>.*?),\sdissenting(\sin\sthe\sresult)?(\.|\Z)',
+                                           paras[i], re.IGNORECASE)
+                    if sentence_m:
+                        sentence = sentence_m.group('justices')
+                        justices = re.search(r'\{{2}sc\|(?:(?:Mr\.\s)?(?:Chief\s)?Justice\s)?(?P<justice>.*?)\}{2}', sentence)
+                        try:
+                            justice = justices.group('justice')
+                            if not justice in self.metadict['sections']['dissent_justices']:
+                                self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                                self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
+                                                     "/Dissent " + justice + "'''\n")
+                                self.metadict['sections']['dissent_justices'].append(justice)
+                                self.metadict['sections']['dissent'].append(i)
+                        except:
+                            self.logger.warning("Unable to identify dissent justice.")
+                            self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
+                            self.pagelist.append("{{-start-}}\n'''" + self.metadict['title'] +
+                                                     "/Dissent'''\n")
                 elif 'per curiam' in paras[i].lower():
                     if 'per curiam' not in self.metadict['sections']:
                         self.pagelist[ind] += "\n{{smallrefs}}\n{{-stop-}}"
@@ -372,4 +391,7 @@ class BotParser(object):
                 s = re.split(r'(\{{2}CaseCaption(?:.|\n)*?\}{2})', self.pagelist[page])
             else:
                 s = re.split(r'(\{{2}header(?:.|\n)*?[^A-Z]\}{2})', self.pagelist[page])
-            self.pagelist[page] = s[0] + s[1] + template + s[2]
+            try:
+                self.pagelist[page] = s[0] + s[1] + template + s[2]
+            except IndexError:
+                self.logger.warning("Unable to add USSC case templates.")

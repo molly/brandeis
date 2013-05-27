@@ -111,26 +111,26 @@ for file in files:
         line = api.get_case_line(metadict['title'], metadict['volume'], metadict['page'])
     except NoCaseInList as e:
         choice = input(e.value + ' Continue? (y/n)')
-        if choice == 'n' or choice == "N":
+        if choice == 'y' or choice == "Y":
+            logger.info(e.value + " Continuing.")
+        else:
             logger.info(e.value + " Skipping.")
             continue
-        else:
-            logger.info(e.value + " Continuing.")
     except MultipleCases as e:
         choice = input(e.value + ' Continue? (y/n)')
-        if choice == 'n' or choice == "N":
+        if choice == 'y' or choice == "Y":
+            logger.info(e.value + " Continuing.")
+        else:
             logger.info(e.value + " Skipping.")
             continue
-        else:
-            logger.info(e.value + " Continuing.")
     else:
         if api.case_exists(line):
-            choice = input(metadict['title'] + 'exists on Wikisource. Continue? (y/n)')
-            if choice == 'n' or choice == "N":
-                logger.info(metadict['title'] + " exists on Wikisource. Skipping.")
-                continue
-            else:
-                logger.info(metadict['title'] + " exists on Wikisource. Continuing.")
+#             choice = input(metadict['title'] + ' exists on Wikisource. Continue? (y/n)')
+#             if choice == 'n' or choice == "N":
+            logger.info(metadict['title'] + " exists on Wikisource. Skipping.")
+            continue
+#             else:
+#                 logger.info(metadict['title'] + " exists on Wikisource. Continuing.")
     
     # At this point, we have a valid text file for a case that does not exist on Wikisource
     logger.info("Parsing {0}.".format(metadict['title']))
@@ -151,7 +151,6 @@ for file in files:
             logger.error("Illegal character encountered: \"{0}\" at {1}. More: {2}"
                               .format(raw_text[e.value], e.value,
                                      (raw_text[e.value:e.value+20] + "...").replace('\n', '\\n')))
-            sys.exit()
     with open(out_filename, 'w', encoding='utf-8') as output_file:
         parser.parse(token_stream, output_file)
     postprocessor.process()
@@ -169,5 +168,5 @@ for file in files:
     bot = Bot(out_filename, bot_filename, metadict)
     bot.prepare()
     logger.info('-----')
-    summary_logger.info('\n\n')
+    summary_logger.info('\n')
          
